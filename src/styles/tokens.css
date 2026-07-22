@@ -1,0 +1,61 @@
+/* 디자인 토큰 — 와이어프레임 v0.1 팔레트 이식. 시각 디자인 확정 전까지의 기준값. */
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --ink: #24302d;
+  --muted: #6b7672;
+  --line: #d8ddda;
+  --accent: #2c7a6e;
+  --accent-soft: #e3efec;
+  --fit-good: #3e9b6c;
+  --fit-warn: #d9a13b;
+  --fit-caution: #cf7a35;
+  --fit-fail: #c4554d;
+  --dog: #ccd3cf;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171b1a;
+    --surface: #1f2523;
+    --ink: #e4e9e6;
+    --muted: #94a09b;
+    --line: #38423e;
+    --accent: #5cb3a4;
+    --accent-soft: #243733;
+    --fit-good: #4fae7d;
+    --fit-warn: #dcae54;
+    --fit-caution: #d98c4f;
+    --fit-fail: #d0685f;
+    --dog: #414b47;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  line-height: 1.6;
+}
+#root {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 1rem 1.1rem 2.5rem;
+}
+button {
+  font: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
