@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/guard-engine-boundary.mjs src && tsc --noEmit && vite build && node scripts/guard-engine-boundary.mjs dist",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "guard": "node scripts/guard-engine-boundary.mjs src"
   },
   "dependencies": {
     "@pet-fit/engine": "workspace:*",
