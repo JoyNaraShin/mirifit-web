@@ -36,12 +36,18 @@ if (mode === "src") {
     });
   }
 } else if (mode === "dist") {
-  const CANARY_TOKENS = ["tightFailOffsetKnitCm", "smallMaxCm", "tooTightMinOffsetCm"];
+  const CANARY_TOKENS = [
+    "tightFailOffsetKnitCm",
+    "smallMaxCm",
+    "tooTightMinOffsetCm",
+  ];
   for (const file of walk(join(root, "dist"), [".js"])) {
     const content = readFileSync(file, "utf8");
     for (const token of CANARY_TOKENS) {
       if (content.includes(token)) {
-        violations.push(`${file}  캐너리 "${token}" 검출 — 엔진 코어가 번들에 포함됨`);
+        violations.push(
+          `${file}  캐너리 "${token}" 검출 — 엔진 코어가 번들에 포함됨`,
+        );
       }
     }
   }
