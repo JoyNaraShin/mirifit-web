@@ -6,6 +6,9 @@
   --muted: #6b7672;
   --line: #d8ddda;
   --accent: #2c7a6e;
+  /* accent 면 위에 올리는 글자색 — 다크에서 accent 가 밝아지므로 테마별로 뒤집는다.
+     흰색으로 고정하면 다크 모드에서 명암비가 무너진다. */
+  --accent-ink: #ffffff;
   --accent-soft: #e3efec;
   --fit-good: #3e9b6c;
   --fit-warn: #d9a13b;
@@ -21,6 +24,7 @@
     --muted: #94a09b;
     --line: #38423e;
     --accent: #5cb3a4;
+    --accent-ink: #0f1f1c;
     --accent-soft: #243733;
     --fit-good: #4fae7d;
     --fit-warn: #dcae54;

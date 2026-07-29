@@ -1,0 +1,246 @@
+/* 공용 UI 프리미티브 — 와이어프레임 v0.1 형태를 따른다. 외부 UI 라이브러리 없음.
+   주 소비 조건 = 모바일 375px 세로. 데스크톱은 tokens.css 의 max-width 430px 컬럼으로 수렴. */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.step {
+  font-variant-numeric: tabular-nums;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.22rem;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.subtitle {
+  margin: -0.5rem 0 0;
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+
+/* 텍스트처럼 보이는 보조 동작(뒤로·어떻게 재요?) — 터치 타깃은 44px 이상 확보. */
+.link-btn {
+  padding: 0.35rem 0;
+  min-height: 2.75rem;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.figure-box {
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.dog-diagram {
+  width: 100%;
+  max-width: 230px;
+  height: auto;
+}
+
+/* 폼 자체가 세로 리듬을 만든다 — fieldset 마다 margin 을 붙이면 서로 상쇄된다. */
+.measure-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.legend {
+  padding: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+.field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.field-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.field-input input::placeholder {
+  color: var(--muted);
+  opacity: 0.75; /* 값과 예시를 눈으로 구분 */
+}
+.field-input input:focus {
+  outline: none; /* 래퍼가 focus-within 으로 표시 */
+}
+/* 숫자 스피너는 좁은 화면에서 값 영역을 잠식한다 — 단위 라벨로 대체. */
+.field-input input[type="number"] {
+  appearance: textfield;
+}
+.field-input input::-webkit-outer-spin-button,
+.field-input input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.unit {
+  flex: none;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.form-note {
+  margin: -0.7rem 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.field-error {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--fit-fail);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 3rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-block {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 바텀시트 — 네이티브 <dialog>. 모바일에선 아래에서, 넓은 화면에선 중앙 카드로. */
+.sheet {
+  width: 100%;
+  max-width: 430px;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+}
+.sheet::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.1rem 1.1rem 1.4rem;
+}
+.sheet-title {
+  margin: 0;
+  font-size: 1.02rem;
+}
+.sheet-figure {
+  display: flex;
+  justify-content: center;
+}
+.sheet-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+.sheet-note {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+@media (min-width: 480px) {
+  .sheet {
+    margin: auto;
+    border-radius: 16px;
+  }
+}

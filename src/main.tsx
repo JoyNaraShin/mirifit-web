@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./App";
 import "./styles/tokens.css";
+import "./styles/ui.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("#root 엘리먼트가 없습니다");
