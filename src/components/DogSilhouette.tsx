@@ -25,8 +25,9 @@ export function DogSilhouette() {
         <rect x="52" y="106" width="11" height="38" rx="5" />
         <rect x="74" y="108" width="11" height="36" rx="5" />
       </g>
-      <circle cx="194" cy="45" r="2.6" fill="var(--ink)" opacity=".6" />
-      <circle cx="220" cy="57" r="3.4" fill="var(--ink)" opacity=".6" />
+      {/* 눈·코. --dog-ink 는 테마별로 항상 몸(--dog)보다 어둡게 정의된다. */}
+      <circle cx="194" cy="45" r="2.6" fill="var(--dog-ink)" />
+      <circle cx="220" cy="57" r="3.4" fill="var(--dog-ink)" />
     </g>
   );
 }

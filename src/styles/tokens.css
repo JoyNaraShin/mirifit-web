@@ -15,6 +15,9 @@
   --fit-caution: #cf7a35;
   --fit-fail: #c4554d;
   --dog: #ccd3cf;
+  /* 눈·코 — 항상 몸보다 어두워야 한다. --ink 를 쓰면 다크에서 색이 뒤집혀
+     어두운 몸에 흰 눈이 뜨는 꼴이 된다(실측: 징그럽다는 피드백). */
+  --dog-ink: #4a5854;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -30,7 +33,9 @@
     --fit-warn: #dcae54;
     --fit-caution: #d98c4f;
     --fit-fail: #d0685f;
-    --dog: #414b47;
+    /* 다크에서도 실루엣이 배경 위에 또렷하게 뜨도록 몸은 밝게, 눈·코는 어둡게. */
+    --dog: #6a7873;
+    --dog-ink: #1b211f;
   }
 }
 
