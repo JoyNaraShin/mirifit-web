@@ -2,6 +2,7 @@ import { DogDiagram } from "@/components/DogDiagram";
 import { MeasureGuideSheet } from "@/components/MeasureGuideSheet";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { useStoredProfile } from "@/hooks/useStoredProfile";
 import {
   EMPTY_DRAFT,
   MEASURE_FIELDS,
@@ -13,22 +14,19 @@ import {
   evaluateDraft,
   profileToDraft,
 } from "@/lib/measureForm";
-import { loadProfile, saveProfile } from "@/lib/storage";
+import { saveProfile } from "@/lib/storage";
 import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-
-/** 실측으로 저장한 프로필만 되살린다 — T2 추정치를 실측란에 넣으면 근거가 섞인다. */
-function initialDraft(): MeasureDraft {
-  const stored = loadProfile();
-  if (!stored || stored.source !== "T1") return EMPTY_DRAFT;
-  return profileToDraft(stored.profile);
-}
 
 export function MeasurePage() {
   const navigate = useNavigate();
   // 히스토리 없이 직접 열린 화면인지 — 첫 엔트리의 key 는 "default".
   const isFreshEntry = useLocation().key === "default";
-  const [draft, setDraft] = useState<MeasureDraft>(initialDraft);
+  const stored = useStoredProfile();
+  // 실측으로 저장한 프로필만 되살린다 — T2 추정치를 실측란에 넣으면 근거가 섞인다.
+  const [draft, setDraft] = useState<MeasureDraft>(() =>
+    stored?.source === "T1" ? profileToDraft(stored.profile) : EMPTY_DRAFT,
+  );
   // 필드를 떠났거나 제출을 시도한 뒤에만 오류를 보여준다 — 입력 중에 빨간 글씨를 들이밀지 않는다.
   const [touched, setTouched] = useState<
     Partial<Record<keyof MeasureDraft, boolean>>

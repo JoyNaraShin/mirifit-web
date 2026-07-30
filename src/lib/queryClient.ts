@@ -7,7 +7,8 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      retry: 1,
+      // 4xx 는 다시 물어도 같은 답이다 — 재시도는 사용자를 기다리게만 한다.
+      retry: false,
     },
   },
 });
