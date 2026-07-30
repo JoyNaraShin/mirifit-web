@@ -1,8 +1,7 @@
-// S3 — 직접 실측 (T1). 와이어프레임 docs/wireframe-phase2.html S3.
-import { useId, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { DogDiagram } from "../components/DogDiagram";
-import { MeasureGuideSheet } from "../components/MeasureGuideSheet";
+import { DogDiagram } from "@/components/DogDiagram";
+import { MeasureGuideSheet } from "@/components/MeasureGuideSheet";
+import { Button } from "@/components/ui/Button";
+import { TextField } from "@/components/ui/TextField";
 import {
   EMPTY_DRAFT,
   MEASURE_FIELDS,
@@ -13,10 +12,12 @@ import {
   blockedReason,
   evaluateDraft,
   profileToDraft,
-} from "../lib/measureForm";
-import { loadProfile, saveProfile } from "../lib/storage";
+} from "@/lib/measureForm";
+import { loadProfile, saveProfile } from "@/lib/storage";
+import { useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
-/** 재진입 프리필 — 실측으로 저장한 프로필만 되살린다(T2 추정치를 실측란에 넣지 않는다). */
+/** 실측으로 저장한 프로필만 되살린다 — T2 추정치를 실측란에 넣으면 근거가 섞인다. */
 function initialDraft(): MeasureDraft {
   const stored = loadProfile();
   if (!stored || stored.source !== "T1") return EMPTY_DRAFT;
@@ -25,9 +26,8 @@ function initialDraft(): MeasureDraft {
 
 export function MeasurePage() {
   const navigate = useNavigate();
-  // 히스토리 없이 직접 열린 화면인지 — react-router 는 첫 엔트리에 key "default" 를 준다.
+  // 히스토리 없이 직접 열린 화면인지 — 첫 엔트리의 key 는 "default".
   const isFreshEntry = useLocation().key === "default";
-  const formId = useId();
   const [draft, setDraft] = useState<MeasureDraft>(initialDraft);
   // 필드를 떠났거나 제출을 시도한 뒤에만 오류를 보여준다 — 입력 중에 빨간 글씨를 들이밀지 않는다.
   const [touched, setTouched] = useState<
@@ -36,15 +36,13 @@ export function MeasurePage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [guideField, setGuideField] = useState<MeasureFieldSpec | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
-  // 라우팅 전환 중 두 번째 제출을 삼킨다 — 모바일에서 더블탭은 기본 행동이고,
-  // 그대로 두면 히스토리에 항목이 2개 쌓여 뒤로가기가 먹히지 않는다.
+  // 모바일에서 더블탭은 기본 행동이라, 막지 않으면 히스토리에 항목이 2개 쌓여
+  // 뒤로가기가 먹히지 않는다.
   const submitting = useRef(false);
   const fieldRefs = useRef<Map<MeasureFieldKey, HTMLInputElement>>(new Map());
 
   const state = evaluateDraft(draft);
-  const fieldId = (key: string) => `${formId}-${key}`;
-  const errorId = (key: string) => `${formId}-${key}-error`;
-  const hintId = (key: string) => `${formId}-${key}-hint`;
+  const reason = blockedReason(state);
 
   const update = (key: keyof MeasureDraft, value: string) =>
     // 로케일 소수점(1,5)을 그대로 두면 Number() 가 NaN 을 준다.
@@ -53,9 +51,6 @@ export function MeasurePage() {
     setTouched((prev) => ({ ...prev, [key]: true }));
   const shownError = (key: keyof MeasureDraft) =>
     touched[key] || submitAttempted ? state.errors[key] : undefined;
-
-  const goBack = () =>
-    isFreshEntry ? navigate("/", { replace: true }) : navigate(-1);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -78,156 +73,125 @@ export function MeasurePage() {
     navigate("/garments");
   };
 
-  const reason = blockedReason(state);
-
   return (
-    <main className="screen">
-      <div className="topbar">
-        <button type="button" className="link-btn" onClick={goBack}>
+    <main className="flex flex-col gap-3">
+      <div className="flex items-center justify-between text-sm text-muted">
+        <Button
+          variant="link"
+          onClick={() =>
+            isFreshEntry ? navigate("/", { replace: true }) : navigate(-1)
+          }
+        >
           ← 뒤로
-        </button>
-        <span className="step">1 / 2</span>
+        </Button>
+        <span className="tabular-nums">1 / 2</span>
       </div>
 
-      <h1 className="title">세 군데만 재면 돼요</h1>
-      <p className="subtitle">
+      <h1 className="text-xl leading-snug font-bold text-balance">
+        세 군데만 재면 돼요
+      </h1>
+      <p className="-mt-2 text-xs text-muted">
         줄자로 잰 값을 넣어 주세요. ±{T1_UNCERTAINTY_CM}cm 오차를 기준으로
         판정해요.
       </p>
 
-      <div className="figure-box">
-        {/* 시트가 열리면 강조는 시트 안 도해가 담당한다 — 배경까지 같이 바뀌면
+      <div className="flex justify-center rounded-xl border border-line bg-surface p-2">
+        {/* 시트가 열리면 강조는 시트 안 도해가 맡는다 — 배경까지 같이 바뀌면
             같은 화면에 개가 두 마리 보인다. */}
         <DogDiagram />
       </div>
 
-      <form className="measure-form" onSubmit={handleSubmit} noValidate>
-        {/* 제출 실패 이유를 1회 발화. aria-describedby 는 포커스가 그 필드에 있을 때만
-            읽히므로, blur 시점에 생긴 오류는 이 리전 없이는 절대 전달되지 않는다. */}
-        <div role="alert" aria-live="assertive" className="visually-hidden">
+      <form className="flex flex-col gap-6" onSubmit={handleSubmit} noValidate>
+        {/* aria-describedby 는 포커스가 그 필드에 있을 때만 읽힌다 — blur 시점에 생긴
+            오류는 이 리전 없이는 스크린리더에 절대 전달되지 않는다. */}
+        <div role="alert" aria-live="assertive" className="sr-only">
           {submitAttempted && reason ? reason : ""}
         </div>
 
-        <fieldset className="fieldset">
-          <legend className="legend">꼭 필요한 치수</legend>
-          {MEASURE_FIELDS.map((field) => {
-            const error = shownError(field.key);
-            return (
-              <div className="field" key={field.key}>
-                <div className="field-head">
-                  <label className="field-label" htmlFor={fieldId(field.key)}>
-                    {field.label}
-                  </label>
-                  <button
-                    type="button"
-                    className="link-btn"
-                    onClick={() => setGuideField(field)}
-                  >
-                    어떻게 재요?
-                  </button>
-                </div>
-                <div className="field-input">
-                  {/* type="number" 는 쓰지 않는다 — 포커스된 채 페이지를 휠 스크롤하면
-                      값이 조용히 바뀐다(실측: 42 → 42.1). 판정을 좌우하는 치수에
-                      그런 오염 경로를 둘 수 없다. 숫자 키패드는 inputMode 가 준다. */}
-                  <input
-                    id={fieldId(field.key)}
-                    ref={(node) => {
-                      if (node) fieldRefs.current.set(field.key, node);
-                      else fieldRefs.current.delete(field.key);
-                    }}
-                    type="text"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    required
-                    aria-required="true"
-                    value={draft[field.key]}
-                    onChange={(e) => update(field.key, e.target.value)}
-                    onBlur={() => markTouched(field.key)}
-                    aria-describedby={`${hintId(field.key)}${error ? ` ${errorId(field.key)}` : ""}`}
-                    aria-invalid={error ? true : undefined}
-                  />
-                  <span className="unit">cm</span>
-                </div>
-                <p className="field-hint" id={hintId(field.key)}>
-                  {field.hint}
-                </p>
-                {error && (
-                  <p className="field-error" id={errorId(field.key)}>
-                    {error}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+        <fieldset className="flex flex-col gap-3 border-0 p-0">
+          <legend className="p-0 text-xs font-bold text-muted">
+            꼭 필요한 치수
+          </legend>
+          {MEASURE_FIELDS.map((field) => (
+            <TextField
+              key={field.key}
+              label={field.label}
+              hint={field.hint}
+              error={shownError(field.key)}
+              unit="cm"
+              align="right"
+              inputRef={(node) => {
+                if (node) fieldRefs.current.set(field.key, node);
+                else fieldRefs.current.delete(field.key);
+              }}
+              action={
+                <Button variant="link" onClick={() => setGuideField(field)}>
+                  어떻게 재요?
+                </Button>
+              }
+              // type="number" 는 쓰지 않는다 — 포커스된 채 페이지를 휠 스크롤하면 값이
+              // 조용히 바뀐다(실측: 42 → 42.1). 숫자 키패드는 inputMode 가 준다.
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              required
+              aria-required="true"
+              value={draft[field.key]}
+              onChange={(e) => update(field.key, e.target.value)}
+              onBlur={() => markTouched(field.key)}
+            />
+          ))}
         </fieldset>
 
-        <fieldset className="fieldset">
-          {/* 정직한 라벨: T1 판정은 가슴 실측으로 체급을 계산하고, 견종은 아직
+        <fieldset className="flex flex-col gap-3 border-0 p-0">
+          {/* 정직한 라벨: T1 판정은 가슴 실측으로 체급을 계산하고 견종은 아직
               BreedShape 매핑이 없다 — 이 두 값은 지금 추천을 바꾸지 못한다. */}
-          <legend className="legend">
+          <legend className="p-0 text-xs font-bold text-muted">
             우리 아이 정보 (선택 — 지금은 저장만 해요)
           </legend>
-          <p className="field-hint">
+          <p className="text-xs text-muted">
             추천 계산에는 아직 쓰지 않아요. 다음 버전의 체형 보정에 쓸 값이에요.
           </p>
-          <div className="field-row">
-            <div className="field">
-              <label className="field-label" htmlFor={fieldId("weightKg")}>
-                체중
-              </label>
-              <div className="field-input">
-                <input
-                  id={fieldId("weightKg")}
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  value={draft.weightKg}
-                  onChange={(e) => update("weightKg", e.target.value)}
-                  onBlur={() => markTouched("weightKg")}
-                  aria-describedby={
-                    shownError("weightKg") ? errorId("weightKg") : undefined
-                  }
-                  aria-invalid={shownError("weightKg") ? true : undefined}
-                />
-                <span className="unit">kg</span>
-              </div>
-            </div>
-            <div className="field">
-              <label className="field-label" htmlFor={fieldId("breed")}>
-                견종
-              </label>
-              <div className="field-input">
-                <input
-                  id={fieldId("breed")}
-                  type="text"
-                  value={draft.breed}
-                  onChange={(e) => update("breed", e.target.value)}
-                  placeholder="예: 말티즈"
-                  maxLength={30}
-                />
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-3">
+            <TextField
+              label="체중"
+              unit="kg"
+              align="right"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              value={draft.weightKg}
+              onChange={(e) => update("weightKg", e.target.value)}
+              onBlur={() => markTouched("weightKg")}
+              error={shownError("weightKg")}
+            />
+            <TextField
+              label="견종"
+              type="text"
+              placeholder="예: 말티즈"
+              maxLength={30}
+              value={draft.breed}
+              onChange={(e) => update("breed", e.target.value)}
+            />
           </div>
-          {/* 반폭 컬럼 밖으로 빼서 어절 중간 줄바꿈을 피한다. */}
-          {shownError("weightKg") && (
-            <p className="field-error" id={errorId("weightKg")}>
-              체중은 {shownError("weightKg")}
-            </p>
-          )}
         </fieldset>
 
         {saveFailed && (
-          <p className="field-error" role="alert">
+          <p
+            className="text-xs font-semibold break-keep text-fit-fail"
+            role="alert"
+          >
             이 브라우저에 값을 저장할 수 없었어요. 시크릿 모드라면 일반 창에서
             다시 시도해 주세요.
           </p>
         )}
 
-        <button type="submit" className="btn btn-primary btn-block">
-          다음 →
-        </button>
-        {reason && <p className="form-note">{reason}</p>}
+        <div className="flex flex-col gap-2">
+          <Button type="submit" variant="primary" block>
+            다음 →
+          </Button>
+          {reason && <p className="text-center text-xs text-muted">{reason}</p>}
+        </div>
       </form>
 
       <MeasureGuideSheet

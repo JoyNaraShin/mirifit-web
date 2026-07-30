@@ -2,11 +2,14 @@
 // 가져와 단일 출처로 유지한다 — 값 import 는 경계 가드가 막는다.
 import type {
   ApiErrorBody,
+  FitRequest,
+  FitResponse,
   GarmentListItem,
   GarmentListResponse,
+  PublicSizeFit,
 } from "@api/_lib/contracts";
 
-export type { GarmentListItem };
+export type { GarmentListItem, FitResponse, PublicSizeFit };
 
 /** 화면이 사용자에게 보여줄 수 있는 실패. 원인 문구는 서버 메시지를 그대로 쓰지 않는다. */
 export class ApiError extends Error {
@@ -19,12 +22,17 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  init: RequestInit,
+  signal?: AbortSignal,
+): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
+      ...init,
       signal,
-      headers: { accept: "application/json" },
+      headers: { accept: "application/json", ...init.headers },
     });
   } catch (cause) {
     // AbortError 는 호출자가 구분해야 하므로 그대로 던진다(디바운스 취소 = 오류 아님).
@@ -56,9 +64,29 @@ export async function fetchGarments(
   signal?: AbortSignal,
 ): Promise<GarmentListItem[]> {
   const query = q.trim() === "" ? "" : `?q=${encodeURIComponent(q.trim())}`;
-  const body = await getJson<GarmentListResponse>(
+  const body = await requestJson<GarmentListResponse>(
     `/api/garments${query}`,
+    { method: "GET" },
     signal,
   );
   return body.garments;
+}
+
+/**
+ * 판정·사이즈 추천. **한 번만 부른다** — 응답에 전 사이즈 후보가 담겨 있어
+ * 사이즈 탭 전환은 클라이언트에서 처리한다(D-06).
+ */
+export async function fetchFit(
+  request: FitRequest,
+  signal?: AbortSignal,
+): Promise<FitResponse> {
+  return requestJson<FitResponse>(
+    "/api/fit",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(request),
+    },
+    signal,
+  );
 }

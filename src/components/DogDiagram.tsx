@@ -1,6 +1,6 @@
+import { DogSilhouette } from "@/components/DogSilhouette";
 // 측정 부위 안내 그림 (와이어프레임 S3). 실루엣 위에 3부위 치수선을 얹는다.
-import type { MeasureFieldKey } from "../lib/measureForm";
-import { DogSilhouette } from "./DogSilhouette";
+import type { MeasureFieldKey } from "@/lib/measureForm";
 
 interface DogDiagramProps {
   /** 강조할 부위. 가이드 시트를 열면 그 부위만 진하게 — 어디를 재는지 눈으로 잇는다. */
@@ -9,19 +9,19 @@ interface DogDiagramProps {
 
 // 비강조는 "물러남"이지 "소멸"이 아니다 — --line(1.37:1)으로 내리면 화면에서 사라져
 // 라벨만 허공에 떠 있게 된다(실측). 3:1 을 유지하는 토큰을 쓴다.
-const DIM = "var(--line-strong)";
-const ON = "var(--accent)";
+const DIM = "var(--color-line-strong)";
+const ON = "var(--color-accent)";
 
 export function DogDiagram({ highlight = null }: DogDiagramProps) {
   // 강조가 없으면 3부위 모두 기본 색. 있으면 나머지는 물러난다.
   const stroke = (part: MeasureFieldKey) =>
     highlight === null || highlight === part ? ON : DIM;
   const label = (part: MeasureFieldKey) =>
-    highlight === null || highlight === part ? ON : "var(--muted)";
+    highlight === null || highlight === part ? ON : "var(--color-muted)";
 
   return (
     <svg
-      className="dog-diagram"
+      className="h-auto w-full max-w-[230px]"
       viewBox="0 0 260 165"
       role="img"
       aria-label="개 실루엣에 목둘레·가슴둘레·등길이를 재는 위치를 표시한 그림"

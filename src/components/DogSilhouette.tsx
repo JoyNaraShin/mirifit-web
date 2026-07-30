@@ -6,7 +6,7 @@ export function DogSilhouette() {
   return (
     // 부모 <svg> 가 role="img" + aria-label 로 대체 텍스트를 제공하므로 내부는 이미 무시된다.
     <g>
-      <g fill="var(--dog)">
+      <g fill="var(--color-dog)">
         <path d="M36 78 Q14 68 20 44 Q23 33 33 35 Q29 52 46 63 Z" />
         <ellipse cx="68" cy="92" rx="30" ry="27" />
         <ellipse cx="112" cy="84" rx="56" ry="31" />
@@ -26,8 +26,8 @@ export function DogSilhouette() {
         <rect x="74" y="108" width="11" height="36" rx="5" />
       </g>
       {/* 눈·코. --dog-ink 는 테마별로 항상 몸(--dog)보다 어둡게 정의된다. */}
-      <circle cx="194" cy="45" r="2.6" fill="var(--dog-ink)" />
-      <circle cx="220" cy="57" r="3.4" fill="var(--dog-ink)" />
+      <circle cx="194" cy="45" r="2.6" fill="var(--color-dog-ink)" />
+      <circle cx="220" cy="57" r="3.4" fill="var(--color-dog-ink)" />
     </g>
   );
 }
