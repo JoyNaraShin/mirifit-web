@@ -27,7 +27,10 @@ export function MeasureGuideSheet({ field, onClose }: MeasureGuideSheetProps) {
     <dialog
       ref={ref}
       className="sheet"
-      aria-labelledby="guide-title"
+      // 닫혀 있을 때는 제목이 렌더되지 않으므로 aria-label 을 함께 둔다 —
+      // labelledby 가 없는 id 를 가리키면 이름 없는 대화상자가 된다.
+      aria-label="측정 가이드"
+      aria-labelledby={field ? "guide-title" : undefined}
       // Esc 로 브라우저가 닫을 때도 부모 상태를 맞춘다.
       onClose={onClose}
       onClick={(event) => {
@@ -36,7 +39,9 @@ export function MeasureGuideSheet({ field, onClose }: MeasureGuideSheetProps) {
       }}
     >
       {field && (
-        <div className="sheet-body">
+        // 초기 포커스를 본문에 둔다 — 닫기 버튼에 떨어지면 스크린리더가 가이드를 건너뛴다.
+        // biome-ignore lint/a11y/noAutofocus: 모달 시트가 열리는 순간의 포커스 지정 — 페이지 로드 시 자동 포커스가 아니다
+        <div className="sheet-body" tabIndex={-1} autoFocus>
           <h2 id="guide-title" className="sheet-title">
             {field.label} 어떻게 재요?
           </h2>

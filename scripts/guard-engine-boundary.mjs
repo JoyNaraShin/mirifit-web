@@ -40,40 +40,113 @@ function stripComments(text) {
   );
 }
 
+// 허용: (1) `@pet-fit/engine/display`(클라 표시 계층)의 모든 import, (2) 경로와
+// 무관하게 **문장 전체가 타입인** `import type { ... }` — 타입은 컴파일 시 지워져
+// 번들에 남지 않는다(플랜 §API 계약).
+// 금지: 코어·미허용 서브패스의 값 import, 혼합형(`import { type A, b }` — 값 부분이
+// 실린다), 재수출(`export ... from` — 번들에 남는다), 동적 import.
+// `@api/*`(서버리스 함수·계약 파일)도 같은 규칙으로 본다 — 계약 타입은 단일 출처를
+// 쓰되 핸들러·시드 값이 클라이언트 번들로 넘어오는 길은 막는다.
+//
+// 줄 단위가 아니라 **문장 단위**로 본다 — biome 이 긴 import 목록을 여러 줄로 쪼개면
+// `from "..."` 이 있는 줄에는 `import type` 키워드가 없어 줄 단위 검사가 뚫린다.
+// ⚠️ 앵커가 핵심이다. 앵커 없이 `[\s\S]*?` 로 두면 clause 가 문장 경계를 넘어
+// **앞 문장의 import 부터** 삼켜, 판정이 "바로 앞에 어떤 import 가 있었나"에 좌우된다.
+// 두 오판 모두 실측으로 재현됐다(아래 SELFTEST fn/fp 케이스). 그래서
+// ① 줄머리 앵커(m 플래그) ② clause 에 `;` 금지.
+const STATEMENT =
+  /^[ \t]*(import|export)\s+((?:[^;'"]|"[^"]*"|'[^']*')*?)\bfrom\s*["']((?:@pet-fit\/engine|@api\/)[^"']*)["']/gm;
+const DYNAMIC = /\bimport\s*\(\s*["']((?:@pet-fit\/engine|@api\/)[^"']*)["']/g;
+const lineOf = (text, index) => text.slice(0, index).split("\n").length;
+
+/** 소스 한 편을 검사해 위반 목록을 돌려준다. 파일 스캔과 자체 테스트가 같은 코드를 쓴다. */
+function scanSource(label, source) {
+  const found = [];
+  const text = stripComments(source);
+  for (const m of text.matchAll(STATEMENT)) {
+    const [, keyword, clause, specifier] = m;
+    if (specifier === "@pet-fit/engine/display") continue;
+    // 코어(또는 미허용 서브패스)는 순수 타입 import 만 통과.
+    // `\b` 로 끝맺어야 `import type{A}`(공백 없는 형태)도 잡힌다.
+    if (keyword === "import" && /^type\b/.test(clause.trimStart())) continue;
+    found.push(
+      `${label}:${lineOf(text, m.index)}  ${keyword} … from "${specifier}" — 값 import·재수출은 서버 전용 경계 위반`,
+    );
+  }
+  for (const m of text.matchAll(DYNAMIC)) {
+    found.push(
+      `${label}:${lineOf(text, m.index)}  동적 import("${m[1]}") — 서버 전용 경계 위반`,
+    );
+  }
+  return found;
+}
+
+/**
+ * 자체 테스트. 가드는 "통과했다"는 신호로 신뢰를 얻는 도구인데, 스캐너가 조용히
+ * 오판하면 그 신호가 거짓이 된다 — 실제로 그렇게 뚫린 적이 있어 픽스처로 못 박는다.
+ */
+const SELFTEST = [
+  ["값 import 차단", 'import { recommendSize } from "@pet-fit/engine";', 1],
+  [
+    "앞줄이 타입 import 여도 값 import 차단(FN 회귀)",
+    'import type { ReactNode } from "react";\nimport { recommendSize } from "@pet-fit/engine";',
+    1,
+  ],
+  [
+    "앞줄이 값 import 여도 타입 import 통과(FP 회귀)",
+    'import { useState } from "react";\nimport type { Measurement } from "@pet-fit/engine";',
+    0,
+  ],
+  [
+    "여러 줄 타입 import 통과",
+    'import type {\n  DogProfile,\n} from "@pet-fit/engine";',
+    0,
+  ],
+  [
+    "공백 없는 타입 import 통과",
+    'import type{DogProfile} from "@pet-fit/engine";',
+    0,
+  ],
+  [
+    "혼합형 차단",
+    'import { type DogProfile, recommendSize } from "@pet-fit/engine";',
+    1,
+  ],
+  ["재수출 차단", 'export type { DogProfile } from "@pet-fit/engine";', 1],
+  ["동적 import 차단", 'const m = await import("@pet-fit/engine");', 1],
+  [
+    "display 값 import 통과",
+    'import { verdictLabel } from "@pet-fit/engine/display";',
+    0,
+  ],
+  ["@api 값 import 차단", 'import { SEED_GARMENTS } from "@api/_lib/seed";', 1],
+  [
+    "@api 타입 import 통과",
+    'import type { FitResponse } from "@api/_lib/contracts";',
+    0,
+  ],
+  [
+    "주석 속 import 단어 무시",
+    '// from "@pet-fit/engine" 을 언급하는 주석\nimport type { DogProfile } from "@pet-fit/engine";',
+    0,
+  ],
+];
+
 const violations = [];
 
 if (mode === "src") {
-  // 허용: (1) `@pet-fit/engine/display`(클라 표시 계층)의 모든 import, (2) 경로와
-  // 무관하게 **문장 전체가 타입인** `import type { ... }` — 타입은 컴파일 시 지워져
-  // 번들에 남지 않는다(플랜 §API 계약).
-  // 금지: 코어·미허용 서브패스의 값 import, 혼합형(`import { type A, b }` — 값 부분이
-  // 실린다), 재수출(`export ... from` — 번들에 남는다), 동적 import.
-  //
-  // 줄 단위가 아니라 **문장 단위**로 본다 — biome 이 긴 import 목록을 여러 줄로 쪼개면
-  // `from "..."` 이 있는 줄에는 `import type` 키워드가 없어 줄 단위 검사가 뚫린다.
-  const STATEMENT =
-    /\b(import|export)\s+([\s\S]*?)\bfrom\s*["'](@pet-fit\/engine[^"']*)["']/g;
-  const DYNAMIC = /\bimport\s*\(\s*["'](@pet-fit\/engine[^"']*)["']/g;
-  const lineOf = (text, index) => text.slice(0, index).split("\n").length;
+  const failures = SELFTEST.filter(
+    ([, source, expected]) =>
+      scanSource("selftest", source).length !== expected,
+  ).map(([name]) => `자체 테스트 실패: ${name}`);
+  if (failures.length > 0) {
+    console.error("✗ 경계 가드 자체 테스트 실패 — 스캐너를 먼저 고쳐야 한다:");
+    for (const f of failures) console.error(`  ${f}`);
+    process.exit(1);
+  }
 
   for (const file of walk(join(root, "src"), [".ts", ".tsx"])) {
-    const text = stripComments(readFileSync(file, "utf8"));
-    for (const m of text.matchAll(STATEMENT)) {
-      const [, keyword, clause, specifier] = m;
-      if (specifier === "@pet-fit/engine/display") continue;
-      // 코어(또는 미허용 서브패스)는 순수 타입 import 만 통과.
-      const typeOnly =
-        keyword === "import" && /^type\s/.test(clause.trimStart());
-      if (typeOnly) continue;
-      violations.push(
-        `${file}:${lineOf(text, m.index)}  ${keyword} … from "${specifier}" — 값 import·재수출은 서버 전용 경계 위반`,
-      );
-    }
-    for (const m of text.matchAll(DYNAMIC)) {
-      violations.push(
-        `${file}:${lineOf(text, m.index)}  동적 import("${m[1]}") — 서버 전용 경계 위반`,
-      );
-    }
+    violations.push(...scanSource(file, readFileSync(file, "utf8")));
   }
 } else if (mode === "dist") {
   const CANARY_TOKENS = [

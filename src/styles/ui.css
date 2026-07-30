@@ -1,17 +1,18 @@
 /* 공용 UI 프리미티브 — 와이어프레임 v0.1 형태를 따른다. 외부 UI 라이브러리 없음.
-   주 소비 조건 = 모바일 375px 세로. 데스크톱은 tokens.css 의 max-width 430px 컬럼으로 수렴. */
+   주 소비 조건 = 모바일 375px 세로. 데스크톱은 tokens.css 의 max-width 430px 컬럼으로 수렴.
+   수치는 tokens.css 의 스케일만 쓴다 — 여기서 임의 값을 쓰면 다음 화면이 그걸 복사한다. */
 
 .screen {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: var(--space-3);
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 .step {
@@ -20,24 +21,37 @@
 
 .title {
   margin: 0;
-  font-size: 1.22rem;
+  font-size: var(--text-xl);
   line-height: 1.35;
   text-wrap: balance;
 }
+
+/* 보조 텍스트는 한 값으로 수렴한다 — 0.76/0.78/0.83rem 처럼 의미 없는 차이를 남기면
+   그 차이가 다음 사람의 기준선이 된다. */
+.subtitle,
+.legend,
+.field-hint,
+.field-error,
+.form-note,
+.sheet-note {
+  font-size: var(--text-xs);
+}
 .subtitle {
-  margin: -0.5rem 0 0;
-  font-size: 0.83rem;
+  margin: calc(-1 * var(--space-2)) 0 0;
   color: var(--muted);
 }
 
-/* 텍스트처럼 보이는 보조 동작(뒤로·어떻게 재요?) — 터치 타깃은 44px 이상 확보. */
+/* 텍스트처럼 보이는 보조 동작(뒤로·어떻게 재요?) — 터치 타깃 44px 이상 확보. */
 .link-btn {
-  padding: 0.35rem 0;
-  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: var(--space-1) 0;
   border: 0;
   background: none;
   color: var(--accent);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -48,9 +62,9 @@
 .figure-box {
   display: flex;
   justify-content: center;
-  padding: 0.6rem;
+  padding: var(--space-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 .dog-diagram {
@@ -63,20 +77,19 @@
 .measure-form {
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: var(--space-5);
 }
 
 .fieldset {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   border: 0;
 }
 .legend {
   padding: 0;
-  font-size: 0.78rem;
   font-weight: 700;
   color: var(--muted);
 }
@@ -84,47 +97,57 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
+  gap: var(--space-3);
 }
 .field-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 .field-label {
-  font-size: 0.9rem;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
+/* 값과 단위를 붙여 둔다 — 넓은 입력에서 좌측 캐럿과 우측 "cm" 가 250px 떨어지면
+   서로 무관한 요소로 읽힌다. 값을 우측 정렬해 단위 바로 왼쪽에 오게 한다. */
 .field-input {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.75rem;
+  padding: 0 var(--space-3);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
 }
 .field-input:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+/* 오류는 문구만이 아니라 입력 자체가 드러내야 한다 — aria-invalid 를 붙여 놓고
+   시각적으로 아무 변화가 없으면 스캔하는 사람은 어디가 문제인지 모른다. */
+.field-input:has(input[aria-invalid="true"]) {
+  border-color: var(--fit-fail);
+  box-shadow: 0 0 0 3px rgb(181 69 61 / 12%);
+}
 .field-input input {
-  flex: 1;
   min-width: 0;
-  padding: 0.7rem 0;
+  padding: var(--space-3) 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   font-variant-numeric: tabular-nums;
+}
+.field-input input[inputmode="decimal"] {
+  text-align: right;
 }
 .field-input input::placeholder {
   color: var(--muted);
@@ -133,52 +156,135 @@
 .field-input input:focus {
   outline: none; /* 래퍼가 focus-within 으로 표시 */
 }
-/* 숫자 스피너는 좁은 화면에서 값 영역을 잠식한다 — 단위 라벨로 대체. */
-.field-input input[type="number"] {
-  appearance: textfield;
-}
-.field-input input::-webkit-outer-spin-button,
-.field-input input::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
-}
 .unit {
-  flex: none;
-  font-size: 0.82rem;
+  padding-left: var(--space-1);
   color: var(--muted);
+  font-size: var(--text-sm);
 }
 
 .form-note {
-  margin: -0.7rem 0 0;
-  font-size: 0.76rem;
+  margin: calc(-1 * var(--space-2)) 0 0;
   color: var(--muted);
   text-align: center;
 }
 
 .field-hint {
   margin: 0;
-  font-size: 0.76rem;
   color: var(--muted);
 }
 .field-error {
   margin: 0;
-  font-size: 0.76rem;
   font-weight: 600;
   color: var(--fit-fail);
+  /* 좁은 컬럼에서 어절 중간이 끊기지 않게 — "입력해 주 / 세요" 방지. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 스크린리더 전용 — 시각적으로 숨기되 접근성 트리·포커스에는 남긴다. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 상품 카드 목록 (S4) */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.card-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+/* 라디오가 시각적으로 숨어 있으므로 포커스 링을 카드가 대신 받는다. */
+.card:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.card-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+.card-meta,
+.card-sizes {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.card-sizes {
+  font-variant-numeric: tabular-nums;
+}
+
+.list-note {
+  margin: 0;
+  padding: var(--space-3) 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* 안내 박스 — 준비중 기능·오류 재시도 */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+}
+.notice-error {
+  border-style: solid;
+  border-color: var(--fit-fail);
+}
+.notice-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.badge {
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
+  gap: var(--space-1);
   min-height: 3rem;
-  padding: 0 1.1rem;
+  padding: 0 var(--space-4);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: var(--text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -189,10 +295,14 @@
 }
 .btn-block {
   width: 100%;
-  margin-top: 0.4rem;
+  margin-top: var(--space-1);
 }
+/* opacity 가 아니라 색 쌍으로 — opacity 는 면과 글자를 함께 배경으로 끌어당겨
+   비활성 라벨을 사실상 안 보이게 만든다(실측 1.39:1). */
 .btn:disabled {
-  opacity: 0.45;
+  border-color: var(--line);
+  background: var(--disabled-surface);
+  color: var(--disabled-ink);
   cursor: not-allowed;
 }
 
@@ -203,22 +313,31 @@
   margin: auto auto 0;
   padding: 0;
   border: 0;
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   background: var(--surface);
   color: var(--ink);
+  overscroll-behavior: contain;
 }
+/* 45% 로는 뒤 화면이 그대로 읽혀 시트와 경쟁한다 — 시트가 앞에 있음을 분명히. */
 .sheet::backdrop {
-  background: rgb(0 0 0 / 45%);
+  background: rgb(0 0 0 / 62%);
+}
+/* 열린 시트 뒤로 본문이 스크롤되면 "떠 있는 카드"가 아니라 미완성으로 읽힌다. */
+body:has(dialog[open]) {
+  overflow: hidden;
 }
 .sheet-body {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  padding: 1.1rem 1.1rem 1.4rem;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-5);
+}
+.sheet-body:focus {
+  outline: none; /* 프로그램적 초기 포커스 — 시각적 링은 불필요 */
 }
 .sheet-title {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: var(--text-lg);
 }
 .sheet-figure {
   display: flex;
@@ -227,20 +346,19 @@
 .sheet-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: var(--space-2);
   margin: 0;
-  padding-left: 1.1rem;
-  font-size: 0.85rem;
+  padding-left: var(--space-4);
+  font-size: var(--text-md);
 }
 .sheet-note {
   margin: 0;
-  font-size: 0.76rem;
   color: var(--muted);
 }
 
 @media (min-width: 480px) {
   .sheet {
     margin: auto;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
   }
 }

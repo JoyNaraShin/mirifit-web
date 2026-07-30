@@ -7,7 +7,9 @@ interface DogDiagramProps {
   highlight?: MeasureFieldKey | null;
 }
 
-const DIM = "var(--line)";
+// 비강조는 "물러남"이지 "소멸"이 아니다 — --line(1.37:1)으로 내리면 화면에서 사라져
+// 라벨만 허공에 떠 있게 된다(실측). 3:1 을 유지하는 토큰을 쓴다.
+const DIM = "var(--line-strong)";
 const ON = "var(--accent)";
 
 export function DogDiagram({ highlight = null }: DogDiagramProps) {

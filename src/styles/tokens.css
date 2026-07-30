@@ -1,10 +1,15 @@
-/* 디자인 토큰 — 와이어프레임 v0.1 팔레트 이식. 시각 디자인 확정 전까지의 기준값. */
+/* 디자인 토큰 — 와이어프레임 v0.1 기준. 시각 디자인 확정 전까지의 기준값.
+   색만 있으면 토큰 시스템이 아니라 팔레트다 — 타입·간격·모서리·상태까지 이름을 붙인다.
+   (첫 화면에서 이름 붙이는 비용이 가장 싸다. 뒤 화면들이 여기서 복사해 간다.) */
 :root {
   --bg: #fafaf8;
   --surface: #ffffff;
   --ink: #24302d;
   --muted: #6b7672;
   --line: #d8ddda;
+  /* 물러나되 사라지지는 않는 선 — 도해의 비강조 부위처럼 "약하게 살아 있어야" 하는 곳.
+     --line(1.37:1)으로 내리면 화면에서 소멸한다(실측). 3:1 이상 유지. */
+  --line-strong: #85908c;
   --accent: #2c7a6e;
   /* accent 면 위에 올리는 글자색 — 다크에서 accent 가 밝아지므로 테마별로 뒤집는다.
      흰색으로 고정하면 다크 모드에서 명암비가 무너진다. */
@@ -13,11 +18,35 @@
   --fit-good: #3e9b6c;
   --fit-warn: #d9a13b;
   --fit-caution: #cf7a35;
-  --fit-fail: #c4554d;
+  /* 오류 문구에도 쓰이므로 본문 대비 AA(4.5:1)를 넘겨야 한다 — 이전 #c4554d 는 4.23:1. */
+  --fit-fail: #b5453d;
+  /* 비활성 상태는 opacity 로 만들지 않는다 — 면과 글자가 함께 배경으로 수렴해
+     명암비가 예측 불가능해진다(실측: 비활성 CTA 1.39:1). 색 쌍으로 정의한다. */
+  --disabled-surface: #e8ebe9;
+  --disabled-ink: #4b5652;
   --dog: #ccd3cf;
   /* 눈·코 — 항상 몸보다 어두워야 한다. --ink 를 쓰면 다크에서 색이 뒤집혀
      어두운 몸에 흰 눈이 뜨는 꼴이 된다(실측: 징그럽다는 피드백). */
   --dog-ink: #4a5854;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* 터치 타깃 최소 치수 — 손으로 개를 붙잡은 채 조작하는 화면이다. */
+  --tap: 2.75rem;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -26,6 +55,7 @@
     --ink: #e4e9e6;
     --muted: #94a09b;
     --line: #38423e;
+    --line-strong: #7d8a85;
     --accent: #5cb3a4;
     --accent-ink: #0f1f1c;
     --accent-soft: #243733;
@@ -33,6 +63,8 @@
     --fit-warn: #dcae54;
     --fit-caution: #d98c4f;
     --fit-fail: #d0685f;
+    --disabled-surface: #2a322f;
+    --disabled-ink: #b9c2be;
     /* 다크에서도 실루엣이 배경 위에 또렷하게 뜨도록 몸은 밝게, 눈·코는 어둡게. */
     --dog: #6a7873;
     --dog-ink: #1b211f;
@@ -53,7 +85,7 @@ body {
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
-  padding: 1rem 1.1rem 2.5rem;
+  padding: var(--space-4) 1.1rem var(--space-5);
 }
 button {
   font: inherit;
@@ -62,9 +94,15 @@ button {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* 모션 축소는 "움직임을 짧게"까지만 — 전역 !important 로 animation 을 죽이면
+   나중에 로딩 표시·판정 색 전환 같은 정보 전달 수단까지 함께 사라진다. */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
   }
 }

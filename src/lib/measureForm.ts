@@ -85,87 +85,103 @@ const parseCm = (raw: string): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-/**
- * 필수 3치수를 검증한다. 선택 입력(체중)은 값이 있을 때만 본다.
- * "아직 안 쓴 필드"와 "잘못 쓴 필드"를 구분해, 입력 중인 사람에게 빨간 글씨를
- * 미리 들이밀지 않는다 — 미입력은 오류가 아니라 미완성이다.
- */
-export function validateDraft(draft: MeasureDraft): {
-  errors: MeasureErrors;
-  complete: boolean;
-} {
-  const errors: MeasureErrors = {};
-  let complete = true;
-
-  for (const field of MEASURE_FIELDS) {
-    const raw = draft[field.key];
-    if (raw.trim() === "") {
-      complete = false;
-      continue;
-    }
-    const value = parseCm(raw);
-    if (value === null || value <= 0) {
-      errors[field.key] = "숫자로 입력해 주세요";
-      complete = false;
-      continue;
-    }
-    if (value < field.minCm || value > field.maxCm) {
-      errors[field.key] = `${field.minCm}~${field.maxCm}cm 사이 값이어야 해요`;
-      complete = false;
-    }
-  }
-
-  const weight = parseCm(draft.weightKg);
-  if (
-    draft.weightKg.trim() !== "" &&
-    (weight === null || weight <= 0 || weight > 100)
-  ) {
-    errors.weightKg = "0~100kg 사이 숫자로 입력해 주세요";
-    complete = false;
-  }
-
-  return { errors, complete };
-}
-
 const measurement = (value: number): Measurement => ({
   value,
   uncertainty: T1_UNCERTAINTY_CM,
   tier: "T1",
 });
 
+const WEIGHT_MAX_KG = 100;
+
 /**
- * 검증을 통과한 초안을 엔진 프로필로 변환한다.
- * `validateDraft(...).complete === true` 일 때만 호출한다 — 아니면 null.
+ * 폼의 상태. **boolean 하나로 접지 않는다** — "아직 안 썼다"와 "잘못 썼다"를 한 비트에
+ * 넣으면 화면이 두 상황을 구분할 수 없어 반드시 어딘가에서 거짓말을 한다
+ * (실측 사고: 범위 밖 값 3개를 넣었는데 "세 치수를 모두 넣으면…"이라고 안내했다).
+ * 그래서 "화면이 사용자에게 무슨 말을 해야 하나"를 타입에 새긴다.
  */
-export function draftToProfile(draft: MeasureDraft): DogProfile | null {
-  const { complete } = validateDraft(draft);
-  if (!complete) return null;
+export type MeasureFormState =
+  | { kind: "incomplete"; missing: MeasureFieldKey[]; errors: MeasureErrors }
+  | { kind: "invalid"; errors: MeasureErrors }
+  | { kind: "valid"; errors: MeasureErrors; profile: DogProfile };
 
-  const neck = parseCm(draft.neck);
-  const chest = parseCm(draft.chest);
-  const back = parseCm(draft.back);
-  if (neck === null || chest === null || back === null) return null;
+/** 초안을 1회 파싱해 상태·오류·프로필을 함께 만든다(검증이 여러 경로로 흩어지지 않게). */
+export function evaluateDraft(draft: MeasureDraft): MeasureFormState {
+  const errors: MeasureErrors = {};
+  const missing: MeasureFieldKey[] = [];
+  const values = {} as Record<MeasureFieldKey, number>;
 
-  const weightKg = parseCm(draft.weightKg);
+  for (const field of MEASURE_FIELDS) {
+    const raw = draft[field.key];
+    if (raw.trim() === "") {
+      missing.push(field.key);
+      continue;
+    }
+    const value = parseCm(raw);
+    if (value === null || value <= 0) {
+      errors[field.key] = "숫자로 입력해 주세요";
+      continue;
+    }
+    if (value < field.minCm || value > field.maxCm) {
+      errors[field.key] = `${field.minCm}~${field.maxCm}cm 사이로 넣어 주세요`;
+      continue;
+    }
+    values[field.key] = value;
+  }
+
+  const weightRaw = draft.weightKg.trim();
+  const weight = parseCm(draft.weightKg);
+  if (
+    weightRaw !== "" &&
+    (weight === null || weight <= 0 || weight > WEIGHT_MAX_KG)
+  ) {
+    errors.weightKg = `0~${WEIGHT_MAX_KG} 사이로 넣어 주세요`;
+  }
+
+  const hasError = Object.keys(errors).length > 0;
+  // 오류가 있으면 미입력보다 오류를 먼저 알린다 — 고칠 것이 눈앞에 있는 쪽이 우선.
+  if (hasError) return { kind: "invalid", errors };
+  if (missing.length > 0) return { kind: "incomplete", missing, errors };
+
   const breed = draft.breed.trim();
-
   return {
-    neck: measurement(neck),
-    chest: measurement(chest),
-    back: measurement(back),
-    ...(weightKg !== null && weightKg > 0 ? { weightKg } : {}),
-    ...(breed !== "" ? { breed } : {}),
+    kind: "valid",
+    errors,
+    profile: {
+      neck: measurement(values.neck),
+      chest: measurement(values.chest),
+      back: measurement(values.back),
+      ...(weight !== null && weight > 0 ? { weightKg: weight } : {}),
+      ...(breed !== "" ? { breed } : {}),
+    },
   };
+}
+
+/** 왜 넘어갈 수 없는지 — 뷰가 추측하지 않고 상태가 문구를 고른다. */
+export function blockedReason(state: MeasureFormState): string | null {
+  if (state.kind === "valid") return null;
+  if (state.kind === "invalid") return "빨간 글씨로 표시한 값을 고쳐 주세요.";
+  if (state.missing.length === MEASURE_FIELDS.length) {
+    return "세 치수를 모두 넣으면 다음으로 넘어갈 수 있어요.";
+  }
+  const labels = MEASURE_FIELDS.filter((f) =>
+    state.missing.includes(f.key),
+  ).map((f) => f.label);
+  return `${labels.join("·")}가 아직 비어 있어요.`;
 }
 
 /** 저장된 프로필을 폼 초안으로 되돌린다(재진입 프리필). */
 export function profileToDraft(profile: DogProfile): MeasureDraft {
-  const cm = (m: Measurement | undefined) => (m ? String(m.value) : "");
+  // 손상된 레코드(값이 없는 Measurement)가 "undefined" 라는 문자열로 새어 들어와
+  // 빈 것처럼 보이는 칸에 오류가 뜨는 일이 있어, 유한수만 되살린다.
+  const cm = (m: Measurement | undefined) =>
+    m && Number.isFinite(m.value) ? String(m.value) : "";
   return {
     neck: cm(profile.neck),
     chest: cm(profile.chest),
     back: cm(profile.back),
-    weightKg: profile.weightKg === undefined ? "" : String(profile.weightKg),
-    breed: profile.breed ?? "",
+    weightKg: Number.isFinite(profile.weightKg as number)
+      ? String(profile.weightKg)
+      : "",
+    breed: typeof profile.breed === "string" ? profile.breed : "",
   };
 }

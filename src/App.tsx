@@ -13,7 +13,8 @@ export function App() {
       <Route path="/estimate" element={<EstimatePage />} />
       <Route path="/measure" element={<MeasurePage />} />
       <Route path="/garments" element={<GarmentsPage />} />
-      <Route path="/result" element={<ResultPage />} />
+      {/* S5/S6 — 판정 결과. 상품별 직링크가 되도록 경로에 garmentId 를 둔다(플랜 C2·C3). */}
+      <Route path="/fit/:garmentId" element={<ResultPage />} />
     </Routes>
   );
 }
