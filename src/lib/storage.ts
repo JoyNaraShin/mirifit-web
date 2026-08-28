@@ -136,3 +136,14 @@ export function saveObservations(value: EstimateObservationInput[]): boolean {
     return false;
   }
 }
+
+/** 저장된 정보 초기화(S1 "처음부터") — 프로필과 관측 원본을 함께 지운다. */
+export function clearStored(): void {
+  try {
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(OBSERVATIONS_KEY);
+  } catch {
+    /* 접근 불가면 지울 것도 없다 */
+  }
+  window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
+}
