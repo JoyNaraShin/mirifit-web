@@ -1,5 +1,6 @@
 // 클라이언트 저장소 (플랜 §localStorage 스키마). 서버에 프로필을 보관하지 않는 데모 전제.
 // 엔진 타입은 타입 전용 import — 컴파일 시 지워지므로 번들에 코어가 실리지 않는다(경계 가드가 검사).
+import type { EstimateObservationInput } from "@api/_lib/contracts";
 import type {
   BodyClass,
   BodyClassOrigin,
@@ -91,4 +92,44 @@ export function saveProfile(value: Omit<StoredProfile, "savedAt">): boolean {
   }
   window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
   return true;
+}
+
+// --- 이전 옷 관측 (S2, 플랜 §localStorage 스키마 petfit.observations.v1) ---
+// /api/estimate 요청 원본을 저장한다 — 정확도 루프("옷 하나 더")가 재진입할 때
+// 이어쓰기 위한 것이지 화면 상태 백업이 아니다. 표시용 정보(브랜드명 등)는 넣지 않는다.
+
+const OBSERVATIONS_KEY = "petfit.observations.v1";
+
+export function loadObservations(): EstimateObservationInput[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(OBSERVATIONS_KEY) ?? "null",
+    );
+    // 최소 형태 검증 — 손상된 값은 "없음"으로. 필드 상세는 서버 검증이 최종 관문이다.
+    if (
+      Array.isArray(parsed) &&
+      parsed.every(
+        (o: unknown) =>
+          typeof o === "object" &&
+          o !== null &&
+          typeof (o as EstimateObservationInput).garmentId === "string" &&
+          typeof (o as EstimateObservationInput).sizeLabel === "string",
+      )
+    ) {
+      return parsed as EstimateObservationInput[];
+    }
+  } catch {
+    /* 접근 불가·손상 — 빈 목록으로 */
+  }
+  return [];
+}
+
+/** 저장 실패(용량·프라이빗 모드)는 화면을 막지 않고 false 로 알린다. */
+export function saveObservations(value: EstimateObservationInput[]): boolean {
+  try {
+    localStorage.setItem(OBSERVATIONS_KEY, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
 }
