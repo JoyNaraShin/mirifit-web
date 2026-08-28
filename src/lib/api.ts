@@ -2,6 +2,9 @@
 // 가져와 단일 출처로 유지한다 — 값 import 는 경계 가드가 막는다.
 import type {
   ApiErrorBody,
+  EstimateObservationInput,
+  EstimateRequest,
+  EstimateResponse,
   FitRequest,
   FitResponse,
   GarmentListItem,
@@ -9,7 +12,13 @@ import type {
   PublicSizeFit,
 } from "@api/_lib/contracts";
 
-export type { GarmentListItem, FitResponse, PublicSizeFit };
+export type {
+  EstimateObservationInput,
+  EstimateResponse,
+  GarmentListItem,
+  FitResponse,
+  PublicSizeFit,
+};
 
 /** 화면이 사용자에게 보여줄 수 있는 실패. 원인 문구는 서버 메시지를 그대로 쓰지 않는다. */
 export class ApiError extends Error {
@@ -82,6 +91,22 @@ export async function fetchFit(
 ): Promise<FitResponse> {
   return requestJson<FitResponse>(
     "/api/fit",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(request),
+    },
+    signal,
+  );
+}
+
+/** 이전 옷 역추정 — S2 "다음" 1회 호출(D-06: 추정은 동선당 1회, 판정은 옷마다). */
+export async function fetchEstimate(
+  request: EstimateRequest,
+  signal?: AbortSignal,
+): Promise<EstimateResponse> {
+  return requestJson<EstimateResponse>(
+    "/api/estimate",
     {
       method: "POST",
       headers: { "content-type": "application/json" },

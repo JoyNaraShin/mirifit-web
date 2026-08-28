@@ -4,12 +4,21 @@ import { VerdictRow } from "@/components/VerdictRow";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
 import { fetchFit } from "@/lib/api";
+import type { PublicSizeFit } from "@/lib/api";
 import { PROFILE_SOURCE_LABEL } from "@/lib/garmentLabels";
 import type { StoredProfile } from "@/lib/storage";
 import type { Measurement } from "@pet-fit/engine";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+
+/** 확인한 전 부위가 확정 good(경계 걸침 없음)인가 — 과신 표시 방지 조건 포함. */
+function allPartsGood(fitMap: PublicSizeFit["fitMap"]): boolean {
+  const parts = [fitMap.chest, fitMap.neck, fitMap.back].filter(
+    (p) => p !== undefined,
+  );
+  return parts.every((p) => p.verdict === "good" && !p.boundaryStraddle);
+}
 
 interface FitResultProps {
   garmentId: string;
@@ -47,6 +56,10 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
             ...(stored.clampedParts
               ? { clampedParts: stored.clampedParts }
               : {}),
+            // T2 근거 옷들의 최저 신뢰도 — 서버가 판정 대상 상품의 출처와 병합한다.
+            ...(stored.lowestSpecSource
+              ? { lowestSpecSource: stored.lowestSpecSource }
+              : {}),
           },
         },
         signal,
@@ -82,6 +95,13 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
             onSelect={setSelected}
           />
 
+          {/* 전 부위 good(경계 걸침 없음)일 때만 요약 배지 — 좋은 소식만 크게(와이어프레임 S6). */}
+          {allPartsGood(current.fitMap) && (
+            <p className="rounded-xl bg-fit-good/12 p-3 text-sm font-semibold break-keep">
+              👍 {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
+            </p>
+          )}
+
           {/* 부위 순서 = 판정 우선순위(가슴 > 목 > 등길이, §3). */}
           <div className="flex flex-col gap-2">
             <VerdictRow part={current.fitMap.chest} />
@@ -91,11 +111,23 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
 
           <MetaNotes meta={data.meta} />
 
-          <Notice text="더 정확하게 보려면 치수를 다시 재거나, 전에 산 옷 정보를 더할 수 있어요.">
-            <Button onClick={() => navigate("/measure")}>
-              📏 치수 다시 재기
-            </Button>
-          </Notice>
+          {stored.source === "T2" ? (
+            // T2 정확도 루프(와이어프레임 S5 하단): 실측 전환 또는 관측 추가 — 어느 쪽이든 범위가 좁아진다.
+            <Notice text="더 정확하게 보려면">
+              <Button onClick={() => navigate("/measure")}>
+                📏 줄자로 직접 재기 — 오차 ±1cm까지 줄어요
+              </Button>
+              <Button onClick={() => navigate("/estimate")}>
+                👕 옷 하나 더 답하기 — 추정 범위가 좁아져요
+              </Button>
+            </Notice>
+          ) : (
+            <Notice text="더 정확하게 보려면 치수를 다시 재거나, 전에 산 옷 정보를 더할 수 있어요.">
+              <Button onClick={() => navigate("/measure")}>
+                📏 치수 다시 재기
+              </Button>
+            </Notice>
+          )}
         </>
       ) : (
         <p className="py-3 text-center text-sm text-muted">

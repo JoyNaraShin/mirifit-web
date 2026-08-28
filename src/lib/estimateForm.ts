@@ -68,3 +68,33 @@ export function buildObservationPayload(
   }
   return payload;
 }
+
+/**
+ * 저장된 관측(정확도 루프 재진입)을 폼 draft 로 복원한다. 저장소에는 요청 원본만
+ * 있으므로(표시 정보 없음 — storage.ts) 상품 목록에서 id 로 되찾아 붙인다.
+ * 목록에서 사라진 상품·사이즈의 관측은 조용히 버리지 않고 복원 가능한 것만 돌려준다 —
+ * 하나도 없으면 null(호출자가 빈 폼으로 시작).
+ */
+export function draftsFromSaved(
+  saved: EstimateObservationInput[],
+  items: GarmentListItem[],
+): ObservationDraft[] | null {
+  const drafts: ObservationDraft[] = [];
+  for (const obs of saved) {
+    const garment = items.find((g) => g.id === obs.garmentId);
+    if (!garment || !garment.sizeLabels.includes(obs.sizeLabel)) continue;
+    drafts.push({
+      ...emptyDraft(),
+      garment,
+      sizeLabel: obs.sizeLabel,
+      ...(obs.chestFit ? { chestFit: obs.chestFit } : {}),
+      // 계약의 "unknown" 은 폼에서 미선택과 같다 — draft 는 undefined 로 든다.
+      ...(obs.armpitTwoFingers && obs.armpitTwoFingers !== "unknown"
+        ? { armpitTwoFingers: obs.armpitTwoFingers }
+        : {}),
+      ...(obs.neckFit ? { neckFit: obs.neckFit } : {}),
+      ...(obs.backLengthFit ? { backLengthFit: obs.backLengthFit } : {}),
+    });
+  }
+  return drafts.length > 0 ? drafts : null;
+}

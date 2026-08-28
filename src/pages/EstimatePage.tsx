@@ -2,32 +2,63 @@ import { FitQuestionChips } from "@/components/FitQuestionChips";
 import { GarmentSearchPicker } from "@/components/GarmentSearchPicker";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
+import { ApiError, fetchEstimate, fetchGarments } from "@/lib/api";
 import type { GarmentListItem } from "@/lib/api";
 import {
   type ObservationDraft,
   buildObservationPayload,
   draftAnswersConstraint,
+  draftsFromSaved,
   emptyDraft,
 } from "@/lib/estimateForm";
-import { saveObservations } from "@/lib/storage";
-import { useRef, useState } from "react";
+import { loadObservations, saveObservations, saveProfile } from "@/lib/storage";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 /**
- * S2 — 이전 옷으로 추정 (T2 주 동선, 플랜 D3). 와이어프레임 docs/wireframe-phase2.html S2.
- * 이 슬라이스는 화면·저장까지다 — "다음"은 관측을 localStorage 에 남기고 S4 로 넘어가며,
- * /api/estimate 호출은 D4 가 배선한다.
+ * S2 — 이전 옷으로 추정 (T2 주 동선, 플랜 D3·D4). 와이어프레임 S2.
+ * "다음"은 POST /api/estimate 로 프로필을 추정해 저장하고 S4 로 넘어간다.
+ * 재진입(정확도 루프 "옷 하나 더")은 저장된 관측을 프리필해 이어쓴다.
  */
 export function EstimatePage() {
   const navigate = useNavigate();
   const isFreshEntry = useLocation().key === "default";
-  const [drafts, setDrafts] = useState<ObservationDraft[]>(() => [
-    emptyDraft(),
-  ]);
+  // 프리필 복원용 전체 목록 — 검색 픽커의 초기 조회(q="")와 같은 키라 캐시를 공유한다.
+  const { data: allGarments } = useSuspenseQuery({
+    queryKey: ["garments", ""],
+    queryFn: ({ signal }) => fetchGarments("", signal),
+  });
+  const [drafts, setDrafts] = useState<ObservationDraft[]>(
+    () => draftsFromSaved(loadObservations(), allGarments) ?? [emptyDraft()],
+  );
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
-  // 모바일 더블탭으로 히스토리가 2번 쌓이는 것 방지 (MeasurePage 와 동일).
-  const submitting = useRef(false);
+
+  const estimate = useMutation({
+    // fetchEstimate 의 2번째 인자(AbortSignal)가 mutation 컨텍스트와 겹치지 않게 감싼다.
+    mutationFn: (request: Parameters<typeof fetchEstimate>[0]) =>
+      fetchEstimate(request),
+    onSuccess: (result, request) => {
+      // 관측 원본을 먼저 남긴다 — 루프 재진입 프리필의 원천. 실패해도 동선은 진행한다.
+      saveObservations(request.observations);
+      const ok = saveProfile({
+        profile: result.profile,
+        source: "T2",
+        bodyClass: result.bodyClass,
+        bodyClassOrigin: result.bodyClassOrigin,
+        conflicts: result.conflicts,
+        clampedParts: result.clampedParts,
+        lowestSpecSource: result.lowestSpecSource,
+      });
+      if (!ok) {
+        // 프로필이 안 남으면 S4 게이트가 되돌려 보낸다 — 여기서 멈추고 알린다.
+        setSaveFailed(true);
+        return;
+      }
+      navigate("/garments");
+    },
+  });
 
   const update = (id: string, patch: Partial<ObservationDraft>) =>
     setDrafts((prev) =>
@@ -58,16 +89,11 @@ export function EstimatePage() {
         : null;
 
   const handleSubmit = () => {
-    if (submitting.current) return;
+    if (estimate.isPending) return;
     setSubmitAttempted(true);
+    setSaveFailed(false);
     if (blockedReason !== null) return;
-    if (!saveObservations(payload)) {
-      // 저장이 안 되면 다음 화면(D4 의 estimate 호출)이 읽을 데이터가 없다 — 여기서 멈춘다.
-      setSaveFailed(true);
-      return;
-    }
-    submitting.current = true;
-    navigate("/garments");
+    estimate.mutate({ observations: payload });
   };
 
   return (
@@ -227,16 +253,27 @@ export function EstimatePage() {
       {submitAttempted && blockedReason !== null && (
         <Notice variant="error" role="alert" text={blockedReason} />
       )}
+      {estimate.isError && (
+        <Notice
+          variant="error"
+          role="alert"
+          text={
+            estimate.error instanceof ApiError
+              ? estimate.error.message
+              : "잠시 문제가 생겼어요. 다시 시도해 주세요."
+          }
+        />
+      )}
       {saveFailed && (
         <Notice
           variant="error"
           role="alert"
-          text="답을 저장하지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해 주세요."
+          text="추정 결과를 저장하지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해 주세요."
         />
       )}
 
       <Button variant="primary" block onClick={handleSubmit}>
-        다음 →
+        {estimate.isPending ? "추정하는 중…" : "다음 →"}
       </Button>
     </main>
   );

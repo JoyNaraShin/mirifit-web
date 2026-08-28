@@ -6,6 +6,7 @@ import type {
   BodyClassOrigin,
   BodyPart,
   DogProfile,
+  SpecSource,
 } from "@pet-fit/engine";
 
 const PROFILE_KEY = "petfit.profile.v1";
@@ -23,6 +24,8 @@ export interface StoredProfile {
   bodyClassOrigin?: BodyClassOrigin;
   conflicts?: boolean;
   clampedParts?: BodyPart[];
+  /** T2 근거 옷들의 최저 스펙 신뢰도 — /api/fit meta 로 넘겨 결과 배지에 반영한다. */
+  lowestSpecSource?: SpecSource;
   savedAt: string;
 }
 
