@@ -147,3 +147,66 @@ export function clearStored(): void {
   }
   window.dispatchEvent(new Event(LOCAL_CHANGE_EVENT));
 }
+
+// --- 핏 피드백 (S6, 플랜 §localStorage 스키마 petfit.feedback.v1) ---
+// D-14: 데모에선 기기에만 저장 — 서버 수집은 검수 큐 없이는 오염이라 Phase 3+.
+
+export interface FitFeedback {
+  garmentId: string;
+  sizeLabel: string;
+  verdictAgreed: boolean;
+  at: string;
+}
+
+const FEEDBACK_KEY = "petfit.feedback.v1";
+
+export function loadFeedback(): FitFeedback[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(FEEDBACK_KEY) ?? "null",
+    );
+    if (
+      Array.isArray(parsed) &&
+      parsed.every(
+        (f: unknown) =>
+          typeof f === "object" &&
+          f !== null &&
+          typeof (f as FitFeedback).garmentId === "string" &&
+          typeof (f as FitFeedback).sizeLabel === "string" &&
+          typeof (f as FitFeedback).verdictAgreed === "boolean",
+      )
+    ) {
+      return parsed as FitFeedback[];
+    }
+  } catch {
+    /* 손상·접근 불가 — 빈 목록 */
+  }
+  return [];
+}
+
+/** 같은 옷·사이즈에 이미 답했으면 그 기록을 돌려준다 — 재방문 시 재질문하지 않기 위한 조회. */
+export function findFeedback(
+  garmentId: string,
+  sizeLabel: string,
+): FitFeedback | undefined {
+  return loadFeedback().find(
+    (f) => f.garmentId === garmentId && f.sizeLabel === sizeLabel,
+  );
+}
+
+/** 기록 실패(용량·프라이빗 모드)는 false — 화면은 막지 않는다. */
+export function saveFeedback(entry: Omit<FitFeedback, "at">): boolean {
+  try {
+    const rest = loadFeedback().filter(
+      (f) =>
+        !(f.garmentId === entry.garmentId && f.sizeLabel === entry.sizeLabel),
+    );
+    localStorage.setItem(
+      FEEDBACK_KEY,
+      JSON.stringify([...rest, { ...entry, at: new Date().toISOString() }]),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
