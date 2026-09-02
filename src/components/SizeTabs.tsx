@@ -48,7 +48,7 @@ export function SizeTabs({
               if (node) refs.current.set(candidate.sizeLabel, node);
               else refs.current.delete(candidate.sizeLabel);
             }}
-            className={`inline-flex min-h-11 flex-none cursor-pointer items-center gap-1 rounded-full border px-3 text-sm font-semibold tabular-nums ${
+            className={`inline-flex min-h-11 min-w-11 flex-none cursor-pointer items-center justify-center gap-1 rounded-full border px-3 text-sm font-semibold tabular-nums ${
               isOn
                 ? "border-accent bg-accent text-accent-ink"
                 : "border-line bg-surface text-ink"

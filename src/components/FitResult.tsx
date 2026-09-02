@@ -1,3 +1,4 @@
+import { FeedbackButtons } from "@/components/FeedbackButtons";
 import { FitMapDiagram } from "@/components/FitMapDiagram";
 import { MetaNotes } from "@/components/MetaNotes";
 import { SizeTabs } from "@/components/SizeTabs";
@@ -78,6 +79,7 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
         <Button variant="link" onClick={() => navigate("/garments")}>
           ← 다른 옷 보기
         </Button>
+        {/* 공유 버튼 자리 — 결과 카드 이미지 생성은 스코프 아웃(Phase 3+), 여기 붙는다. */}
       </div>
 
       <h1 className="text-xl leading-snug font-bold text-balance">
@@ -116,6 +118,12 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
           </div>
 
           <MetaNotes meta={data.meta} />
+
+          <FeedbackButtons
+            key={`${garmentId}-${current.sizeLabel}`}
+            garmentId={garmentId}
+            sizeLabel={current.sizeLabel}
+          />
 
           {stored.source === "T2" ? (
             // T2 정확도 루프(와이어프레임 S5 하단): 실측 전환 또는 관측 추가 — 어느 쪽이든 범위가 좁아진다.
