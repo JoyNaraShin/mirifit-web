@@ -73,7 +73,7 @@ S1 시작 ─→ (줄자 없음) S2 이전 옷 응답 ─→ 역추정(서버) �
 
 ```bash
 pnpm install
-PETFIT_API_TARGET=https://mirifit.vercel.app pnpm dev   # /api 를 라이브로 프록시
+PETFIT_API_TARGET=https://mirifit-api.vercel.app pnpm dev   # /api 를 라이브로 프록시
 pnpm build    # 경계 가드(src) → tsc → vite build → 경계 가드(dist)
 ```
 
