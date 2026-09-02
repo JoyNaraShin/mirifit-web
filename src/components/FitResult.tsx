@@ -1,3 +1,4 @@
+import { FitMapDiagram } from "@/components/FitMapDiagram";
 import { MetaNotes } from "@/components/MetaNotes";
 import { SizeTabs } from "@/components/SizeTabs";
 import { VerdictRow } from "@/components/VerdictRow";
@@ -101,6 +102,11 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
               👍 {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
             </p>
           )}
+
+          {/* 다이어그램은 보조 표현 — 정본은 아래 텍스트 판정 행(접근성, 플랜 E2). */}
+          <div className="flex justify-center rounded-xl border border-line bg-surface px-2 pt-3 pb-1">
+            <FitMapDiagram fitMap={current.fitMap} />
+          </div>
 
           {/* 부위 순서 = 판정 우선순위(가슴 > 목 > 등길이, §3). */}
           <div className="flex flex-col gap-2">
