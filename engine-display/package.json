@@ -1,0 +1,17 @@
+{
+  "name": "@pet-fit/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./display": {
+      "types": "./src/format.ts",
+      "default": "./src/format.ts"
+    }
+  }
+}
