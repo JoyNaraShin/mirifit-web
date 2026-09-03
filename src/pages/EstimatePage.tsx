@@ -2,6 +2,7 @@ import { FitQuestionChips } from "@/components/FitQuestionChips";
 import { GarmentSearchPicker } from "@/components/GarmentSearchPicker";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
+import { TextField } from "@/components/ui/TextField";
 import { ApiError, fetchEstimate, fetchGarments } from "@/lib/api";
 import type { GarmentListItem } from "@/lib/api";
 import {
@@ -11,6 +12,7 @@ import {
   draftsFromSaved,
   emptyDraft,
 } from "@/lib/estimateForm";
+import { WEIGHT_MAX_KG, parseCm } from "@/lib/measureForm";
 import { loadObservations, saveObservations, saveProfile } from "@/lib/storage";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -37,6 +39,8 @@ export function EstimatePage() {
     () => draftsFromSaved(loadObservations(), allGarments) ?? [emptyDraft()],
   );
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  // 체중(선택) — 서버 체급(소·중·대형) 프라이어로만 쓰인다(계약 prior.weightKg, 리뷰 structure:F2).
+  const [weightRaw, setWeightRaw] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
 
   const estimate = useMutation({
@@ -47,7 +51,14 @@ export function EstimatePage() {
       // 관측 원본을 먼저 남긴다 — 루프 재진입 프리필의 원천. 실패해도 동선은 진행한다.
       saveObservations(request.observations);
       const ok = saveProfile({
-        profile: result.profile,
+        // 서버 프로필은 추정 치수만 담는다 — 사용자가 준 체중은 클라이언트
+        // 소유 원본이므로 여기서 합쳐 보존한다(시작 화면 카드·재입력 근거).
+        profile: {
+          ...result.profile,
+          ...(weightParsed !== null && weightParsed > 0
+            ? { weightKg: weightParsed }
+            : {}),
+        },
         source: "T2",
         bodyClass: result.bodyClass,
         bodyClassOrigin: result.bodyClassOrigin,
@@ -85,6 +96,12 @@ export function EstimatePage() {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
 
   const payload = buildObservationPayload(drafts);
+  const weightParsed = parseCm(weightRaw);
+  const weightError =
+    weightRaw.trim() !== "" &&
+    (weightParsed === null || weightParsed <= 0 || weightParsed > WEIGHT_MAX_KG)
+      ? `0~${WEIGHT_MAX_KG} 사이로 넣어 주세요`
+      : undefined;
   // 제출을 막는 사유 — 버튼 비활성 대신 제출이 이유를 드러낸다(비활성 버튼은 탭 순서에서
   // 사라져 키보드·스크린리더 사용자가 이유에 도달할 길이 없다 — MeasurePage 와 동일 원칙).
   const blockedReason =
@@ -100,8 +117,13 @@ export function EstimatePage() {
     if (estimate.isPending) return;
     setSubmitAttempted(true);
     setSaveFailed(false);
-    if (blockedReason !== null) return;
-    estimate.mutate({ observations: payload });
+    if (blockedReason !== null || weightError !== undefined) return;
+    estimate.mutate({
+      observations: payload,
+      ...(weightParsed !== null && weightParsed > 0
+        ? { prior: { weightKg: weightParsed } }
+        : {}),
+    });
   };
 
   return (
@@ -249,6 +271,24 @@ export function EstimatePage() {
           )}
         </section>
       ))}
+
+      <section
+        aria-label="체중 (선택)"
+        className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-3"
+      >
+        <TextField
+          label="체중 (선택)"
+          hint="알려주면 체급(소·중·대형) 추정이 더 정확해져요"
+          unit="kg"
+          align="right"
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={weightRaw}
+          onChange={(e) => setWeightRaw(e.target.value)}
+          error={weightError}
+        />
+      </section>
 
       <Button
         onClick={() => setDrafts((prev) => [...prev, emptyDraft()])}

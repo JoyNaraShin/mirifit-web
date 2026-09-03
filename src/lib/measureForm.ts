@@ -78,7 +78,7 @@ export const EMPTY_DRAFT: MeasureDraft = {
 /** 필드별 오류 문구. 값이 없으면 그 필드는 통과. */
 export type MeasureErrors = Partial<Record<keyof MeasureDraft, string>>;
 
-const parseCm = (raw: string): number | null => {
+export const parseCm = (raw: string): number | null => {
   const trimmed = raw.trim();
   if (trimmed === "") return null;
   const n = Number(trimmed);
@@ -91,7 +91,7 @@ const measurement = (value: number): Measurement => ({
   tier: "T1",
 });
 
-const WEIGHT_MAX_KG = 100;
+export const WEIGHT_MAX_KG = 100;
 
 /**
  * 폼의 상태. **boolean 하나로 접지 않는다** — "아직 안 썼다"와 "잘못 썼다"를 한 비트에

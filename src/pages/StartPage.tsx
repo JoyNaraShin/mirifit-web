@@ -77,6 +77,20 @@ export function StartPage() {
 
       {stored && (
         <Notice text="저장된 우리 아이 정보가 있어요.">
+          {/* 누구의 정보인지 보여준다 — "있어요"만으로는 지울지 이어갈지 판단할 근거가 없다. */}
+          {(stored.profile.breed !== undefined ||
+            stored.profile.weightKg !== undefined) && (
+            <p className="text-xs text-muted">
+              {[
+                stored.profile.breed,
+                stored.profile.weightKg !== undefined
+                  ? `${stored.profile.weightKg}kg`
+                  : undefined,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
           <Button onClick={() => navigate("/garments")}>
             이어서 하기 (저장된 우리 아이 정보)
           </Button>
