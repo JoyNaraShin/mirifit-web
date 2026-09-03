@@ -12,7 +12,10 @@ export function ResultPage() {
 
   // 게이트: 프로필·상품·가슴둘레가 있어야 판정이 성립한다. 렌더 시점에 갈라
   // 조회 컴포넌트가 서스펜드하기 전에 결론을 낸다.
-  if (!stored || !garmentId) return <Navigate to="/" replace />;
+  // 직링크(공유 링크) 수신자는 프로필이 없다 — 어느 상품이었는지 홈으로 실어
+  // 보내, 치수를 넣은 뒤 이 결과로 되돌아오게 한다(공유 라우트의 존재 이유).
+  if (!stored || !garmentId)
+    return <Navigate to="/" replace state={{ pendingGarmentId: garmentId }} />;
 
   const chest = stored.profile.chest;
   if (!chest) {

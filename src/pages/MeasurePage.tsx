@@ -21,7 +21,11 @@ import { useLocation, useNavigate } from "react-router";
 export function MeasurePage() {
   const navigate = useNavigate();
   // 히스토리 없이 직접 열린 화면인지 — 첫 엔트리의 key 는 "default".
-  const isFreshEntry = useLocation().key === "default";
+  const location = useLocation();
+  const isFreshEntry = location.key === "default";
+  const pendingGarmentId = (
+    location.state as { pendingGarmentId?: string } | null
+  )?.pendingGarmentId;
   const stored = useStoredProfile();
   // 실측으로 저장한 프로필만 되살린다 — T2 추정치를 실측란에 넣으면 근거가 섞인다.
   const [draft, setDraft] = useState<MeasureDraft>(() =>
@@ -69,7 +73,10 @@ export function MeasurePage() {
     }
     submitting.current = true;
     // 제출된 폼은 히스토리에서 소거 — 뒤로가기가 "완료된 입력"으로 돌아가지 않게.
-    navigate("/garments", { replace: true });
+    // 공유 직링크에서 온 입력이면 그 판정 결과로 곧장 복귀한다.
+    navigate(pendingGarmentId ? `/fit/${pendingGarmentId}` : "/garments", {
+      replace: true,
+    });
   };
 
   return (

@@ -23,7 +23,11 @@ import { useLocation, useNavigate } from "react-router";
  */
 export function EstimatePage() {
   const navigate = useNavigate();
-  const isFreshEntry = useLocation().key === "default";
+  const location = useLocation();
+  const isFreshEntry = location.key === "default";
+  const pendingGarmentId = (
+    location.state as { pendingGarmentId?: string } | null
+  )?.pendingGarmentId;
   // 프리필 복원용 전체 목록 — 검색 픽커의 초기 조회(q="")와 같은 키라 캐시를 공유한다.
   const { data: allGarments } = useSuspenseQuery({
     queryKey: ["garments", ""],
@@ -57,7 +61,10 @@ export function EstimatePage() {
         return;
       }
       // 제출된 폼은 히스토리에서 소거 — 뒤로가기가 "완료된 입력"으로 돌아가지 않게.
-      navigate("/garments", { replace: true });
+      // 공유 직링크에서 온 입력이면 그 판정 결과로 곧장 복귀한다.
+      navigate(pendingGarmentId ? `/fit/${pendingGarmentId}` : "/garments", {
+        replace: true,
+      });
     },
   });
 

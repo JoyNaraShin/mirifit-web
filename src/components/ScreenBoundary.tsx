@@ -4,7 +4,7 @@ import { Notice } from "@/components/ui/Notice";
 import { ApiError } from "@/lib/api";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { type ReactNode, Suspense } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 /**
  * 화면 단위 로딩·오류 경계. 페이지에서 isPending/isError 분기를 걷어내는 대가로
@@ -14,26 +14,38 @@ import { useLocation } from "react-router";
  */
 export function ScreenBoundary({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   return (
     <QueryErrorResetBoundary>
       {({ reset }) => (
         <ErrorBoundary
           resetKey={pathname}
           onReset={reset}
-          fallback={(error, retry) => (
-            <main className="flex flex-col gap-3 pt-4">
-              <Notice variant="error" role="alert">
-                <p className="text-sm break-keep text-muted">
-                  {/* 사용자 문구는 ApiError(서버가 한국어로 만든 것)만 신뢰 —
-                      렌더 버그·파싱 오류의 영문 원문을 반려인에게 읽히지 않는다. */}
-                  {error instanceof ApiError && error.message
-                    ? error.message
-                    : "잠시 문제가 생겼어요. 다시 시도해 주세요."}
-                </p>
-                <Button onClick={retry}>다시 시도</Button>
-              </Notice>
-            </main>
-          )}
+          fallback={(error, retry) => {
+            // 404 는 재시도해도 같은 결과 — 빠져나갈 길(옷 목록)을 준다.
+            const isNotFound =
+              error instanceof ApiError && error.status === 404;
+            return (
+              <main className="flex flex-col gap-3 pt-4">
+                <Notice variant="error" role="alert">
+                  <p className="text-sm break-keep text-muted">
+                    {/* 사용자 문구는 ApiError(서버가 한국어로 만든 것)만 신뢰 —
+                        렌더 버그·파싱 오류의 영문 원문을 반려인에게 읽히지 않는다. */}
+                    {error instanceof ApiError && error.message
+                      ? error.message
+                      : "잠시 문제가 생겼어요. 다시 시도해 주세요."}
+                  </p>
+                  {isNotFound ? (
+                    <Button onClick={() => navigate("/garments")}>
+                      옷 목록으로
+                    </Button>
+                  ) : (
+                    <Button onClick={retry}>다시 시도</Button>
+                  )}
+                </Notice>
+              </main>
+            );
+          }}
         >
           <Suspense
             fallback={
