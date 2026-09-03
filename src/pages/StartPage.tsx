@@ -1,3 +1,4 @@
+import { DogMark } from "@/components/DogSilhouette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
@@ -124,7 +125,8 @@ export function StartPage() {
       </BottomSheet>
 
       <Button variant="link" className="break-keep" onClick={startSample}>
-        🐕 예시로 먼저 구경하기 — 샘플 강아지 {SAMPLE_DOG_NAME}
+        <DogMark height={16} /> 예시로 먼저 구경하기 — 샘플 강아지{" "}
+        {SAMPLE_DOG_NAME}
       </Button>
     </main>
   );

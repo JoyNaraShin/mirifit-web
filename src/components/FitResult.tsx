@@ -4,6 +4,7 @@ import { MetaNotes } from "@/components/MetaNotes";
 import { SizeTabs } from "@/components/SizeTabs";
 import { VerdictRow } from "@/components/VerdictRow";
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { fetchFit } from "@/lib/api";
 import type { PublicSizeFit } from "@/lib/api";
@@ -108,7 +109,11 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
           {/* 전 부위 good(경계 걸침 없음)일 때만 요약 배지 — 좋은 소식만 크게(와이어프레임 S6). */}
           {allPartsGood(current.fitMap) && (
             <p className="rounded-xl bg-fit-good/12 p-3 text-sm font-semibold break-keep">
-              👍 {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
+              <Icon
+                name="thumb-up"
+                className="mr-1 inline-block align-[-3px]"
+              />
+              {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
             </p>
           )}
 
@@ -136,16 +141,16 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
             // T2 정확도 루프(와이어프레임 S5 하단): 실측 전환 또는 관측 추가 — 어느 쪽이든 범위가 좁아진다.
             <Notice text="더 정확하게 보려면">
               <Button onClick={() => navigate("/measure")}>
-                📏 줄자로 직접 재기 — 오차 ±1cm까지 줄어요
+                <Icon name="ruler" /> 줄자로 직접 재기 — 오차 ±1cm까지 줄어요
               </Button>
               <Button onClick={() => navigate("/estimate")}>
-                👕 옷 하나 더 답하기 — 추정 범위가 좁아져요
+                <Icon name="shirt" /> 옷 하나 더 답하기 — 추정 범위가 좁아져요
               </Button>
             </Notice>
           ) : (
             <Notice text="더 정확하게 보려면 치수를 다시 재거나, 전에 산 옷 정보를 더할 수 있어요.">
               <Button onClick={() => navigate("/measure")}>
-                📏 치수 다시 재기
+                <Icon name="ruler" /> 치수 다시 재기
               </Button>
             </Notice>
           )}

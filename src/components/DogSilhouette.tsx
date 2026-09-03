@@ -31,3 +31,27 @@ export function DogSilhouette() {
     </g>
   );
 }
+
+/**
+ * 인라인 마스코트 마크 — 헤더 로고·샘플 버튼 등 텍스트 옆 장식용 (리뷰 craft:F5).
+ * 실루엣 좌표계(260×165)를 그대로 축소한다. 장식 전용이라 aria-hidden 고정.
+ */
+export function DogMark({
+  height = 18,
+  className,
+}: {
+  height?: number;
+  className?: string;
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 260 165"
+      height={height}
+      width={Math.round((height * 260) / 165)}
+      className={className}
+    >
+      <DogSilhouette />
+    </svg>
+  );
+}

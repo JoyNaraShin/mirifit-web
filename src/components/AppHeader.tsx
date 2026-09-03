@@ -1,3 +1,4 @@
+import { DogMark } from "@/components/DogSilhouette";
 import { APP_NAME } from "@/lib/appName";
 import { Link } from "react-router";
 
@@ -13,7 +14,7 @@ export function AppHeader() {
         to="/"
         className="inline-flex min-h-11 items-center text-sm font-bold text-accent"
       >
-        🐕 {APP_NAME}
+        <DogMark height={20} /> {APP_NAME}
       </Link>
     </header>
   );

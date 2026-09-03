@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { findFeedback, saveFeedback } from "@/lib/storage";
 import { useState } from "react";
 
@@ -46,8 +47,12 @@ export function FeedbackButtons({
             </span>
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => answer(true)}>👍 잘 맞았어요</Button>
-            <Button onClick={() => answer(false)}>👎 달랐어요</Button>
+            <Button onClick={() => answer(true)}>
+              <Icon name="thumb-up" /> 잘 맞았어요
+            </Button>
+            <Button onClick={() => answer(false)}>
+              <Icon name="thumb-down" /> 달랐어요
+            </Button>
           </div>
         </>
       )}

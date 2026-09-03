@@ -30,7 +30,9 @@ interface FitMapDiagramProps {
 export function FitMapDiagram({ fitMap }: FitMapDiagramProps) {
   // 패턴 id 는 인스턴스 고유로 — 같은 화면에 두 개 뜨면 id 충돌로 한쪽이 죽는다
   // (DogSilhouette 를 symbol 대신 컴포넌트로 만든 것과 같은 이유).
-  const patternId = useId();
+  const uid = useId();
+  const patternId = `${uid}-hatch`;
+  const bodyClipId = `${uid}-body`;
   const hatch = `url(#${patternId})`;
 
   const parts = [fitMap.chest, fitMap.neck, fitMap.back].filter(
@@ -67,35 +69,47 @@ export function FitMapDiagram({ fitMap }: FitMapDiagramProps) {
             opacity="0.45"
           />
         </pattern>
+        {/* 실루엣 몸 도형과 동일 좌표의 클립 — 존 색이 실루엣 안쪽만 칠하게 한다.
+            검은 테두리 패치를 몸 위에 얹는 대신 "몸이 그 색의 옷을 입은" 형태가 된다
+            (리뷰 craft:F7). 도형이 DogSilhouette 와 어긋나면 색이 새거나 빈다. */}
+        <clipPath id={bodyClipId}>
+          <ellipse cx="68" cy="92" rx="30" ry="27" />
+          <ellipse cx="112" cy="84" rx="56" ry="31" />
+          <circle cx="152" cy="90" r="25" />
+        </clipPath>
       </defs>
 
       <DogSilhouette />
 
-      {/* 가슴 존 — 몸통. 존 색은 실루엣과 명도 대비가 3:1에 못 미치므로(실측 1.3~2.3)
-          ink 경계선이 형태 인지를 맡는다 — 색은 보조 신호, 정본은 텍스트 행. */}
-      <rect
-        x="94"
-        y="55"
-        width="82"
-        height="57"
-        rx="24"
-        fill={VERDICT_VAR[chest.verdict]}
-        opacity="0.9"
+      {/* 가슴 존 — 몸통을 조끼처럼 부분칠. 라벨은 존 안 흰 글자 대신 그림 밖
+          ink 텍스트 + 리더 라인(DogDiagram 문법) — 색 대비와 무관하게 읽힌다. */}
+      <g clipPath={`url(#${bodyClipId})`}>
+        <rect
+          x="94"
+          y="42"
+          width="82"
+          height="90"
+          fill={VERDICT_VAR[chest.verdict]}
+          opacity="0.9"
+        />
+        {chest.boundaryStraddle && (
+          <rect x="94" y="42" width="82" height="90" fill={hatch} />
+        )}
+      </g>
+      <line
+        x1="130"
+        y1="112"
+        x2="120"
+        y2="142"
         stroke="var(--color-ink)"
-        strokeWidth="1.5"
+        strokeWidth="1"
       />
-      {chest.boundaryStraddle && (
-        <rect x="94" y="55" width="82" height="57" rx="24" fill={hatch} />
-      )}
       <text
-        x="120"
-        y="88"
-        fontSize="11"
+        x="100"
+        y="152"
+        fontSize="10"
         fontWeight="700"
-        fill="#fff"
-        stroke="rgba(0,0,0,0.55)"
-        strokeWidth="2"
-        paintOrder="stroke"
+        fill="var(--color-ink)"
       >
         가슴
       </text>
@@ -109,23 +123,47 @@ export function FitMapDiagram({ fitMap }: FitMapDiagramProps) {
             rx="13"
             ry="10"
             fill={VERDICT_VAR[neck.verdict]}
+            opacity="0.9"
             transform="rotate(-14 172 62)"
-            stroke="var(--color-ink)"
-            strokeWidth="1.5"
           />
+          {/* 판정 갈림 — 존이 작아 빗금이 안 읽히므로 이중 윤곽으로 알린다.
+              (색과 독립적인 두 번째 신호라는 역할은 가슴의 빗금과 같다.) */}
           {neck.boundaryStraddle && (
-            <ellipse
-              cx="172"
-              cy="62"
-              rx="13"
-              ry="10"
-              fill={hatch}
-              transform="rotate(-14 172 62)"
-            />
+            <>
+              <ellipse
+                cx="172"
+                cy="62"
+                rx="13"
+                ry="10"
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth="1.5"
+                transform="rotate(-14 172 62)"
+              />
+              <ellipse
+                cx="172"
+                cy="62"
+                rx="16.5"
+                ry="13.5"
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth="1"
+                strokeDasharray="3 2.5"
+                transform="rotate(-14 172 62)"
+              />
+            </>
           )}
+          <line
+            x1="180"
+            y1="70"
+            x2="196"
+            y2="86"
+            stroke="var(--color-ink)"
+            strokeWidth="1"
+          />
           <text
-            x="188"
-            y="84"
+            x="194"
+            y="98"
             fontSize="10"
             fontWeight="700"
             fill="var(--color-ink)"
