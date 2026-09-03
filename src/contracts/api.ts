@@ -18,6 +18,10 @@ import type {
   RecommendationMeta,
 } from "@pet-fit/engine/display";
 
+// [Phase 3+ 자리표시] apiVersion — 퍼블릭 전환으로 외부 소비자가 생기면 응답
+// 봉투에 버전 필드를 붙이고 여기서 계약을 갈래친다. 지금은 클라이언트 사본이
+// sha256 매니페스트 게이트로 서버와 한 몸으로 배포되므로 버전 협상이 없다.
+
 /**
  * GET /api/garments 응답 항목. **치수(cm)는 없다** — 스펙 DB 가 자산이라
  * 목록에서 내보내지 않는다(§6). 클라이언트는 라벨·메타만 안다.

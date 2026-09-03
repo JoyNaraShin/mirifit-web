@@ -12,7 +12,12 @@ import { defineConfig } from "vite";
 const API_TARGET = process.env.PETFIT_API_TARGET ?? "http://localhost:3999";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    // React Compiler — 수동 memo 없이 리렌더를 자동 최소화한다(리뷰 craft:F10).
+    // 규칙 위반 컴포넌트는 컴파일러가 건너뛰므로 동작 변화 없이 켤 수 있다.
+    react({ babel: { plugins: ["babel-plugin-react-compiler"] } }),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

@@ -2,6 +2,8 @@ import type { PublicSizeFit } from "@/lib/api";
 import { useRef } from "react";
 
 interface SizeTabsProps {
+  /** 탭 id 접두 — 부모가 tabpanel 의 aria-labelledby 와 짝을 맞춘다(craft:F8). */
+  idBase: string;
   candidates: PublicSizeFit[];
   recommended: string | null;
   selected: string;
@@ -10,6 +12,7 @@ interface SizeTabsProps {
 
 /** WAI-ARIA 탭 규약: 그룹 전체가 탭 정지 1개, 좌우 화살표로 이동. */
 export function SizeTabs({
+  idBase,
   candidates,
   recommended,
   selected,
@@ -42,6 +45,8 @@ export function SizeTabs({
             key={candidate.sizeLabel}
             type="button"
             role="tab"
+            id={`${idBase}-tab-${candidate.sizeLabel}`}
+            aria-controls={`${idBase}-panel`}
             aria-selected={isOn}
             tabIndex={isOn ? 0 : -1}
             ref={(node) => {

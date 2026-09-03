@@ -12,7 +12,7 @@ import { PROFILE_SOURCE_LABEL } from "@/lib/garmentLabels";
 import type { StoredProfile } from "@/lib/storage";
 import type { Measurement } from "@pet-fit/engine";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
 /** 확인한 전 부위가 확정 good(경계 걸침 없음)인가 — 과신 표시 방지 조건 포함. */
@@ -73,6 +73,7 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
       ),
   });
 
+  const tabsId = useId();
   const { recommendation } = data;
   const current =
     recommendation.candidates.find((c) => c.sizeLabel === selected) ??
@@ -100,33 +101,42 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
       {current ? (
         <>
           <SizeTabs
+            idBase={tabsId}
             candidates={recommendation.candidates}
             recommended={recommendation.recommended}
             selected={current.sizeLabel}
             onSelect={setSelected}
           />
 
-          {/* 전 부위 good(경계 걸침 없음)일 때만 요약 배지 — 좋은 소식만 크게(와이어프레임 S6). */}
-          {allPartsGood(current.fitMap) && (
-            <p className="rounded-xl bg-fit-good/12 p-3 text-sm font-semibold break-keep">
-              <Icon
-                name="thumb-up"
-                className="mr-1 inline-block align-[-3px]"
-              />
-              {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
-            </p>
-          )}
+          {/* 탭이 갈아끼우는 내용 — 규약상 탭과 패널을 id 로 잇는다(craft:F8). */}
+          <div
+            role="tabpanel"
+            id={`${tabsId}-panel`}
+            aria-labelledby={`${tabsId}-tab-${current.sizeLabel}`}
+            className="flex flex-col gap-3"
+          >
+            {/* 전 부위 good(경계 걸침 없음)일 때만 요약 배지 — 좋은 소식만 크게(와이어프레임 S6). */}
+            {allPartsGood(current.fitMap) && (
+              <p className="rounded-xl bg-fit-good/12 p-3 text-sm font-semibold break-keep">
+                <Icon
+                  name="thumb-up"
+                  className="mr-1 inline-block align-[-3px]"
+                />
+                {current.sizeLabel} — 확인한 부위가 모두 잘 맞아요
+              </p>
+            )}
 
-          {/* 다이어그램은 보조 표현 — 정본은 아래 텍스트 판정 행(접근성, 플랜 E2). */}
-          <div className="flex justify-center rounded-xl border border-line bg-surface px-2 pt-3 pb-1">
-            <FitMapDiagram fitMap={current.fitMap} />
-          </div>
+            {/* 다이어그램은 보조 표현 — 정본은 아래 텍스트 판정 행(접근성, 플랜 E2). */}
+            <div className="flex justify-center rounded-xl border border-line bg-surface px-2 pt-3 pb-1">
+              <FitMapDiagram fitMap={current.fitMap} />
+            </div>
 
-          {/* 부위 순서 = 판정 우선순위(가슴 > 목 > 등길이, §3). */}
-          <div className="flex flex-col gap-2">
-            <VerdictRow part={current.fitMap.chest} />
-            {current.fitMap.neck && <VerdictRow part={current.fitMap.neck} />}
-            {current.fitMap.back && <VerdictRow part={current.fitMap.back} />}
+            {/* 부위 순서 = 판정 우선순위(가슴 > 목 > 등길이, §3). */}
+            <div className="flex flex-col gap-2">
+              <VerdictRow part={current.fitMap.chest} />
+              {current.fitMap.neck && <VerdictRow part={current.fitMap.neck} />}
+              {current.fitMap.back && <VerdictRow part={current.fitMap.back} />}
+            </div>
           </div>
 
           <MetaNotes meta={data.meta} />
