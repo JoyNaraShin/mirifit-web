@@ -12,7 +12,7 @@ import type { StoredProfile } from "@/lib/storage";
 import type { Measurement } from "@pet-fit/engine";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 /** 확인한 전 부위가 확정 good(경계 걸침 없음)인가 — 과신 표시 방지 조건 포함. */
 function allPartsGood(fitMap: PublicSizeFit["fitMap"]): boolean {
@@ -31,6 +31,10 @@ interface FitResultProps {
 
 export function FitResult({ garmentId, stored, chest }: FitResultProps) {
   const navigate = useNavigate();
+  // 옷 목록에서 왔으면 "다른 옷 보기"는 push 가 아니라 뒤로가기 — 목록↔결과
+  // 왕복이 히스토리를 무한 적재해 뒤로가기가 홈에 못 닿는 회귀의 주범이었다.
+  const fromGarments =
+    (useLocation().state as { from?: string } | null)?.from === "garments";
   const [selected, setSelected] = useState<string | null>(null);
   const { neck, back } = stored.profile;
 
@@ -76,7 +80,10 @@ export function FitResult({ garmentId, stored, chest }: FitResultProps) {
   return (
     <main className="flex flex-col gap-3">
       <div className="flex items-center justify-between text-sm text-muted">
-        <Button variant="link" onClick={() => navigate("/garments")}>
+        <Button
+          variant="link"
+          onClick={() => (fromGarments ? navigate(-1) : navigate("/garments"))}
+        >
           ← 다른 옷 보기
         </Button>
         {/* 공유 버튼 자리 — 결과 카드 이미지 생성은 스코프 아웃(Phase 3+), 여기 붙는다. */}

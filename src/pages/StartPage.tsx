@@ -24,9 +24,7 @@ export function StartPage() {
   };
 
   return (
-    <main className="flex flex-col gap-3 pt-6">
-      <p className="text-sm font-bold text-accent">{APP_NAME}</p>
-
+    <main className="flex flex-col gap-3 pt-4">
       <h1 className="text-2xl leading-snug font-bold text-balance">
         사고 나서 후회 말고,
         <br />

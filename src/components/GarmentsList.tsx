@@ -45,7 +45,9 @@ export function GarmentsList() {
         block
         disabled={selected === null}
         onClick={() => {
-          if (selected !== null) navigate(`/fit/${selected}`);
+          if (selected !== null)
+            // 출처 표식 — 결과 화면의 "다른 옷 보기"가 push 대신 뒤로가기로 돌아가게 한다.
+            navigate(`/fit/${selected}`, { state: { from: "garments" } });
         }}
       >
         핏 확인하기 →

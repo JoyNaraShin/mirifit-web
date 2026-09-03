@@ -1,3 +1,4 @@
+import { AppHeader } from "@/components/AppHeader";
 import { ScreenBoundary } from "@/components/ScreenBoundary";
 import { EstimatePage } from "@/pages/EstimatePage";
 import { GarmentsPage } from "@/pages/GarmentsPage";
@@ -10,15 +11,18 @@ import { Route, Routes } from "react-router";
 // 로딩·오류는 화면 안이 아니라 경계가 처리한다 — 페이지는 성공 상태만 그린다.
 export function App() {
   return (
-    <ScreenBoundary>
-      <Routes>
-        <Route path="/" element={<StartPage />} />
-        <Route path="/estimate" element={<EstimatePage />} />
-        <Route path="/measure" element={<MeasurePage />} />
-        <Route path="/garments" element={<GarmentsPage />} />
-        {/* S5/S6 — 판정 결과. 상품별 직링크가 되도록 경로에 garmentId 를 둔다(플랜 C2·C3). */}
-        <Route path="/fit/:garmentId" element={<ResultPage />} />
-      </Routes>
-    </ScreenBoundary>
+    <>
+      <AppHeader />
+      <ScreenBoundary>
+        <Routes>
+          <Route path="/" element={<StartPage />} />
+          <Route path="/estimate" element={<EstimatePage />} />
+          <Route path="/measure" element={<MeasurePage />} />
+          <Route path="/garments" element={<GarmentsPage />} />
+          {/* S5/S6 — 판정 결과. 상품별 직링크가 되도록 경로에 garmentId 를 둔다(플랜 C2·C3). */}
+          <Route path="/fit/:garmentId" element={<ResultPage />} />
+        </Routes>
+      </ScreenBoundary>
+    </>
   );
 }

@@ -68,7 +68,8 @@ export function MeasurePage() {
       return;
     }
     submitting.current = true;
-    navigate("/garments");
+    // 제출된 폼은 히스토리에서 소거 — 뒤로가기가 "완료된 입력"으로 돌아가지 않게.
+    navigate("/garments", { replace: true });
   };
 
   return (
