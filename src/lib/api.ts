@@ -1,4 +1,4 @@
-// API 호출 계층. 응답 타입은 서버 계약 파일(@api/_lib/contracts)을 타입 전용으로
+// API 호출 계층. 응답 타입은 서버 계약 파일(@/contracts/api)을 타입 전용으로
 // 가져와 단일 출처로 유지한다 — 값 import 는 경계 가드가 막는다.
 import type {
   ApiErrorBody,
@@ -10,7 +10,7 @@ import type {
   GarmentListItem,
   GarmentListResponse,
   PublicSizeFit,
-} from "@api/_lib/contracts";
+} from "@/contracts/api";
 
 export type {
   EstimateObservationInput,

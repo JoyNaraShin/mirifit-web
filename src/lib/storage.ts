@@ -1,6 +1,6 @@
 // 클라이언트 저장소 (플랜 §localStorage 스키마). 서버에 프로필을 보관하지 않는 데모 전제.
 // 엔진 타입은 타입 전용 import — 컴파일 시 지워지므로 번들에 코어가 실리지 않는다(경계 가드가 검사).
-import type { EstimateObservationInput } from "@api/_lib/contracts";
+import type { EstimateObservationInput } from "@/contracts/api";
 import type {
   BodyClass,
   BodyClassOrigin,

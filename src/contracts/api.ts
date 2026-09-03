@@ -131,7 +131,11 @@ export interface FitResponse {
   meta: RecommendationMeta;
 }
 
-export type ApiErrorCode = "INVALID_INPUT" | "GARMENT_NOT_FOUND";
+export type ApiErrorCode =
+  | "INVALID_INPUT"
+  | "GARMENT_NOT_FOUND"
+  | "RATE_LIMITED"
+  | "INTERNAL";
 
 export interface ApiErrorBody {
   error: { code: ApiErrorCode; message: string };

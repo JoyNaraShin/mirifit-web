@@ -154,8 +154,14 @@ if (mode === "src") {
     "smallMaxCm",
     "tooTightMinOffsetCm",
   ];
+  // 양성 대조군 — display 계층이 번들에 반드시 싣는 문자열(T2 티어 라벨).
+  // "위반 0" 은 스캐너가 진짜 번들을 읽었을 때만 의미가 있다. 잘못된 경로를
+  // 훑거나 빈 산출물을 보고도 침묵 통과하는 실패형을 여기서 잡는다.
+  const POSITIVE_CONTROL = "이전 옷 기준 추정";
+  let controlSeen = false;
   for (const file of walk(join(root, "dist"), [".js"])) {
     const content = readFileSync(file, "utf8");
+    if (content.includes(POSITIVE_CONTROL)) controlSeen = true;
     for (const token of CANARY_TOKENS) {
       if (content.includes(token)) {
         violations.push(
@@ -163,6 +169,11 @@ if (mode === "src") {
         );
       }
     }
+  }
+  if (!controlSeen) {
+    violations.push(
+      `양성 대조군 "${POSITIVE_CONTROL}" 미검출 — 스캐너가 실제 번들을 읽지 못함(경로·빌드 확인)`,
+    );
   }
 } else {
   console.error("usage: guard-engine-boundary.mjs <src|dist>");

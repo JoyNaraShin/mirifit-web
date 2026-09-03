@@ -1,10 +1,10 @@
 // S2 이전 옷 입력 폼의 상태 모델 (플랜 D3). 화면(EstimatePage)에서 분리해
 // "무엇이 제출 가능한 관측인가" 판정을 렌더 트리 밖에서 테스트 가능하게 둔다.
-import type { GarmentListItem } from "@/lib/api";
 import type {
   ArmpitTwoFingers,
   EstimateObservationInput,
-} from "@api/_lib/contracts";
+} from "@/contracts/api";
+import type { GarmentListItem } from "@/lib/api";
 import type { BackLengthResponse, GarmentFitResponse } from "@pet-fit/engine";
 
 export interface ObservationDraft {

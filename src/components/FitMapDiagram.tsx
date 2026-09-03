@@ -1,5 +1,5 @@
 import { DogSilhouette } from "@/components/DogSilhouette";
-import type { PublicFitMap, PublicPartFit } from "@api/_lib/contracts";
+import type { PublicFitMap, PublicPartFit } from "@/contracts/api";
 import type { FitVerdict } from "@pet-fit/engine";
 import { PART_SUBJECT, verdictLabel } from "@pet-fit/engine/display";
 import { useId } from "react";

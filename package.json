@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/guard-engine-boundary.mjs src && tsc --noEmit && vite build && node scripts/guard-engine-boundary.mjs dist",
+    "build": "node scripts/check-contract-manifest.mjs && node scripts/guard-engine-boundary.mjs src && tsc --noEmit && vite build && node scripts/guard-engine-boundary.mjs dist",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "guard": "node scripts/guard-engine-boundary.mjs src"

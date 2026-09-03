@@ -1,0 +1,24 @@
+# 공개 저장소 CI (리뷰 structure:F5).
+# build 한 번이 게이트 전부를 통과시킨다 — 계약 매니페스트 정합 →
+# 엔진 경계 가드(src) → tsc → vite build → 경계 가드(dist, 양성 대조군 포함).
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
