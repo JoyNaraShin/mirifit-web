@@ -5,7 +5,7 @@ import { TextField } from "@/components/ui/TextField";
 import { type GarmentListItem, fetchGarments } from "@/lib/api";
 import { CATEGORY_LABEL, FABRIC_UNKNOWN_NOTE } from "@/lib/garmentLabels";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -30,16 +30,24 @@ export function GarmentSearchPicker({
   const groupName = useId();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  // 검색어 갱신은 transition — 아니면 useSuspenseQuery 의 key 변경이 화면 전체를
+  // Suspense 폴백으로 갈아치우고 포커스(모바일 키보드)까지 죽인다(리뷰 실측).
+  const [isPending, startTransition] = useTransition();
 
   // 첫 조회는 즉시, 타이핑 중에는 디바운스.
   useEffect(() => {
     if (query === "") {
-      setDebounced("");
+      startTransition(() => setDebounced(""));
       return;
     }
-    const timer = setTimeout(() => setDebounced(query), SEARCH_DEBOUNCE_MS);
+    const timer = setTimeout(
+      () => startTransition(() => setDebounced(query)),
+      SEARCH_DEBOUNCE_MS,
+    );
     return () => clearTimeout(timer);
   }, [query]);
+  // 이전 목록을 유지한 채 새 결과를 기다리는 구간 — 흐림으로만 알린다.
+  const isStale = isPending || query !== debounced;
 
   const { data: items } = useSuspenseQuery({
     queryKey: ["garments", debounced],
@@ -54,7 +62,7 @@ export function GarmentSearchPicker({
   }, [items, selectedId, onChange]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" aria-busy={isStale}>
       <TextField
         label="브랜드·상품 검색"
         type="search"
@@ -79,7 +87,9 @@ export function GarmentSearchPicker({
       {items.length > 0 && (
         // 네이티브 라디오 그룹 — 탭 정지 1개·화살표 이동·단일 선택을 브라우저가 처리한다.
         // 시각적으로는 카드지만 조작 규약을 손으로 만들지 않는다.
-        <fieldset className="flex flex-col gap-2 border-0 p-0">
+        <fieldset
+          className={`flex flex-col gap-2 border-0 p-0 transition-opacity ${isStale ? "opacity-60" : ""}`}
+        >
           <legend className="sr-only">{legend}</legend>
           {items.map((garment) => (
             <label

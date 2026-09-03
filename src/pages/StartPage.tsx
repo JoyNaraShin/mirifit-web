@@ -1,20 +1,23 @@
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Notice } from "@/components/ui/Notice";
 import { useStoredProfile } from "@/hooks/useStoredProfile";
 import { APP_NAME } from "@/lib/appName";
 import {
-  SAMPLE_DOG_DESC,
   SAMPLE_DOG_NAME,
   SAMPLE_GARMENT_ID,
   SAMPLE_PROFILE,
 } from "@/lib/sampleDog";
 import { clearStored, saveProfile } from "@/lib/storage";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 
 /** S1 — 시작·분기 (플랜 E1, 와이어프레임 S1). T2(이전 옷)가 주 CTA — D-01. */
 export function StartPage() {
   const navigate = useNavigate();
   const stored = useStoredProfile();
+  // 삭제는 3분짜리 실측을 되돌릴 수 없이 지운다 — 확인 한 겹을 세운다(리뷰 F6).
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const startSample = () => {
     // 저장 실패(프라이빗 모드)여도 막지 않는다 — 결과 화면 게이트가 스토리지를 읽으므로
@@ -62,15 +65,37 @@ export function StartPage() {
           <Button onClick={() => navigate("/garments")}>
             이어서 하기 (저장된 우리 아이 정보)
           </Button>
-          <Button variant="link" onClick={() => clearStored()}>
+          <Button variant="link" onClick={() => setConfirmingReset(true)}>
             처음부터 다시 하기 — 저장 정보 지우기
           </Button>
         </Notice>
       )}
 
-      <Button variant="link" onClick={startSample}>
-        🐕 예시로 먼저 구경하기 — 샘플 강아지 "{SAMPLE_DOG_NAME}(
-        {SAMPLE_DOG_DESC})"
+      <BottomSheet
+        open={confirmingReset}
+        label="저장 정보 삭제"
+        onClose={() => setConfirmingReset(false)}
+      >
+        <p className="text-sm break-keep text-muted">
+          잰 치수와 답한 옷 기록이 지워져요. 되돌릴 수 없어요.
+        </p>
+        <Button
+          variant="primary"
+          block
+          onClick={() => {
+            clearStored();
+            setConfirmingReset(false);
+          }}
+        >
+          지우기
+        </Button>
+        <Button block onClick={() => setConfirmingReset(false)}>
+          취소
+        </Button>
+      </BottomSheet>
+
+      <Button variant="link" className="break-keep" onClick={startSample}>
+        🐕 예시로 먼저 구경하기 — 샘플 강아지 {SAMPLE_DOG_NAME}
       </Button>
     </main>
   );
